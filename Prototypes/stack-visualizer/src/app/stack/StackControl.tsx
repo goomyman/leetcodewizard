@@ -3,19 +3,13 @@
 import { useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import StackItem from "./StackItem";
-import { StackItemType } from "./StackItemConstants";
+import { StackItemType, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 
 export default function StackControl() {
   const [stack, setStack] = useState<StackItemType[]>([]);
   const [stackSize, setStackSize] = useState<number>(0);
 
   const nextIdRef = useRef<number>(0);
-  const timeoutsRef = useRef<number[]>([]);
-
-  const clearAllTimeouts = () => {
-    timeoutsRef.current.forEach((t) => clearTimeout(t));
-    timeoutsRef.current = [];
-  };
 
   const getRandomColor = () =>
     `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
@@ -23,7 +17,6 @@ export default function StackControl() {
   const pushItem = () => {
     if (stack[0]?.state === "halfPush" || stack[0]?.state === "halfPop") {
       setStack((prev) => {
-        if (!prev.length) return prev;
         const next = [...prev];
         next[0] = { ...next[0], state: "fullPush" };
         return next;
@@ -33,7 +26,8 @@ export default function StackControl() {
 
     const id = nextIdRef.current++;
     const newItem: StackItemType = {
-      id,
+      i: id,
+      start: id, // just using id as start for now
       color: getRandomColor(),
       state: "halfPush",
     };
@@ -51,56 +45,10 @@ export default function StackControl() {
     }
 
     setStack((prev) => {
-      if (!prev.length) return prev;
       const next = [...prev];
       next[0] = { ...next[0], state: "halfPop" };
       return next;
     });
-  };
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(e.target.value);
-    clearAllTimeouts();
-
-    if (value > stack.length) {
-      const delta = value - stack.length;
-      for (let i = 0; i < delta; i++) {
-        const id = nextIdRef.current++;
-        const newItem: StackItemType = {
-          id,
-          color: getRandomColor(),
-          state: "halfPush",
-        };
-        setStack((prev) => [newItem, ...prev]);
-
-        const t = window.setTimeout(() => {
-          setStack((prev) =>
-            prev.map((it) => (it.id === id ? { ...it, state: "fullPush" } : it))
-          );
-        }, 250 + i * 150);
-        timeoutsRef.current.push(t);
-      }
-    } else if (value < stack.length) {
-      const delta = stack.length - value;
-      for (let i = 0; i < delta; i++) {
-        const t1 = window.setTimeout(() => {
-          setStack((prev) => {
-            if (!prev.length) return prev;
-            const next = [...prev];
-            next[0] = { ...next[0], state: "halfPop" };
-            return next;
-          });
-        }, i * 180);
-        timeoutsRef.current.push(t1);
-
-        const t2 = window.setTimeout(() => {
-          setStack((prev) => prev.slice(1));
-        }, 250 + i * 180);
-        timeoutsRef.current.push(t2);
-      }
-    }
-
-    setStackSize(value);
   };
 
   return (
@@ -127,14 +75,19 @@ export default function StackControl() {
         min="0"
         max="20"
         value={stackSize}
-        onChange={handleSliderChange}
+        onChange={(e) => {
+          const value = Number(e.target.value);
+          if (value > stack.length) pushItem();
+          else if (value < stack.length) popItem();
+          setStackSize(value);
+        }}
         className="w-72 mb-6"
       />
 
       <div className="stack-container flex flex-col justify-end items-center w-72 h-96 border border-transparent">
         <AnimatePresence>
           {stack.map((item) => (
-            <StackItem key={item.id} item={item} />
+            <StackItem key={item.i} item={item} />
           ))}
         </AnimatePresence>
       </div>
