@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import StackItem from "./StackItem";
-import { StackItemType, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { StackItemType } from "./StackItemConstants";
 
 export default function StackControl() {
   const [stack, setStack] = useState<StackItemType[]>([]);
