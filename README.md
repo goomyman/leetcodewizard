@@ -3,7 +3,7 @@ Study examples and a website to learn how to pass leet code interviews
 
 The goal of this is to help teach others and provide learning materials for leet code.   
 
-I highly recommend AI tools such as <a href="https://www.chatgpt.com>ChatGPT</a> for design and detailed examples.   
+I highly recommend AI tools such as <a href="https://www.chatgpt.com">ChatGPT</a> for design and detailed examples.   
 
 For System Design I highly recommend the books "System Design" and "System Design Interview Volume 2" by Alex Yu & Sahn Lam
 
