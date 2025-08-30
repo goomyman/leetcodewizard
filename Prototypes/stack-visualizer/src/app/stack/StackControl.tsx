@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import StackItem, { type StackItemType, STACK_ITEM_HEIGHT } from "./StackItem";
+import StackItem from "./StackItem";
+import { StackItemType, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 
 export default function StackControl() {
   const [stack, setStack] = useState<StackItemType[]>([]);
@@ -20,7 +21,6 @@ export default function StackControl() {
     `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
 
   const pushItem = () => {
-    // If top is half-pushed or half-popped, complete it to full center.
     if (stack[0]?.state === "halfPush" || stack[0]?.state === "halfPop") {
       setStack((prev) => {
         if (!prev.length) return prev;
@@ -31,11 +31,9 @@ export default function StackControl() {
       return;
     }
 
-    // Otherwise create a new halfPush item (stops halfway).
     const id = nextIdRef.current++;
     const newItem: StackItemType = {
       id,
-      path: `path-${id}`,
       color: getRandomColor(),
       state: "halfPush",
     };
@@ -46,14 +44,12 @@ export default function StackControl() {
   const popItem = () => {
     if (!stack.length) return;
 
-    // If the top is already halfPop, remove it fully.
     if (stack[0].state === "halfPop") {
       setStack((prev) => prev.slice(1));
       setStackSize((s) => Math.max(0, s - 1));
       return;
     }
 
-    // Otherwise mark top as halfPop (it will slide halfway out).
     setStack((prev) => {
       if (!prev.length) return prev;
       const next = [...prev];
@@ -62,38 +58,31 @@ export default function StackControl() {
     });
   };
 
-  // Slider increases/decreases should respect the two-step animation.
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value);
     clearAllTimeouts();
 
-    // Increase: add `delta` items, each starts halfPush then completes to fullPush in a small stagger.
     if (value > stack.length) {
       const delta = value - stack.length;
       for (let i = 0; i < delta; i++) {
         const id = nextIdRef.current++;
         const newItem: StackItemType = {
           id,
-          path: `path-${id}`,
           color: getRandomColor(),
           state: "halfPush",
         };
-        // add immediately (half-way)
         setStack((prev) => [newItem, ...prev]);
 
-        // schedule completion to fullPush with stagger
         const t = window.setTimeout(() => {
-          setStack((prev) => {
-            return prev.map((it) => (it.id === id ? { ...it, state: "fullPush" } : it));
-          });
+          setStack((prev) =>
+            prev.map((it) => (it.id === id ? { ...it, state: "fullPush" } : it))
+          );
         }, 250 + i * 150);
         timeoutsRef.current.push(t);
       }
     } else if (value < stack.length) {
-      // Decrease: remove items one-by-one: mark halfPop, then remove after short delay (staggered)
       const delta = stack.length - value;
       for (let i = 0; i < delta; i++) {
-        // schedule marking top as halfPop
         const t1 = window.setTimeout(() => {
           setStack((prev) => {
             if (!prev.length) return prev;
@@ -104,7 +93,6 @@ export default function StackControl() {
         }, i * 180);
         timeoutsRef.current.push(t1);
 
-        // schedule full removal shortly after
         const t2 = window.setTimeout(() => {
           setStack((prev) => prev.slice(1));
         }, 250 + i * 180);
