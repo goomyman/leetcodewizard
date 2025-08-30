@@ -1,32 +1,63 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import StackItem, { StackItemType } from "./StackItem";
-import "./Stack.css"; // optional for custom rules if needed
+import { AnimatePresence } from "framer-motion";
+import StackItem, { type StackItemType, STACK_ITEM_HEIGHT } from "./StackItem";
 
 export default function StackControl() {
   const [stack, setStack] = useState<StackItemType[]>([]);
-  const [stackSize, setStackSize] = useState<number>(0);
+  const [stackSize, setStackSize] = useState(0);
 
-  const getRandomColor = (): string =>
+  const getRandomColor = () =>
     `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
 
   const pushItem = () => {
+    if (stack[0]?.paused === "push") {
+      // resume paused push
+      const next = [...stack];
+      next[0] = { ...next[0], paused: undefined };
+      setStack(next);
+      return;
+    }
     const newItem: StackItemType = {
       i: stack.length,
-      start: 1,
+      path: `path-${stack.length}`,
       color: getRandomColor(),
-      height: 20
     };
     setStack([newItem, ...stack]);
-    setStackSize(stack.length + 1);
+    setStackSize((s) => s + 1);
+  };
+
+  const pushPauseItem = () => {
+    const newItem: StackItemType = {
+      i: stack.length,
+      path: `path-${stack.length}`,
+      color: getRandomColor(),
+      paused: "push",
+    };
+    setStack([newItem, ...stack]);
+    setStackSize((s) => s + 1);
+  };
+
+  const popPauseItem = () => {
+    if (!stack.length) return;
+    const next = [...stack];
+    next[0] = { ...next[0], paused: "pop" };
+    setStack(next);
   };
 
   const popItem = () => {
-    if (stack.length === 0) return;
-    setStack(stack.slice(1)); // remove top visually
-    setStackSize(stack.length - 1);
+    if (!stack.length) return;
+
+    if (stack[0]?.paused === "pop") {
+      // actually remove paused pop
+      setStack(stack.slice(1));
+      setStackSize((s) => Math.max(0, s - 1));
+    } else {
+      // normal remove
+      setStack(stack.slice(1));
+      setStackSize((s) => Math.max(0, s - 1));
+    }
   };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,15 +65,18 @@ export default function StackControl() {
     setStackSize(value);
 
     if (value > stack.length) {
-      const newItems = Array.from({ length: value - stack.length }, (_, i) => ({
-        i: stack.length + i,
-        start: 1,
-        color: getRandomColor(),
-        height: 20,
-      }));
+      const add = value - stack.length;
+      const newItems = Array.from({ length: add }, (_, i) => {
+        const idx = stack.length + i;
+        return {
+          i: idx,
+          path: `path-${idx}`,
+          color: getRandomColor(),
+        } as StackItemType;
+      });
       setStack([...newItems, ...stack]);
     } else if (value < stack.length) {
-      setStack(stack.slice(stack.length - value)); // keep top items
+      setStack(stack.slice(0, value));
     }
   };
 
@@ -57,10 +91,23 @@ export default function StackControl() {
         </button>
         <button
           onClick={popItem}
-          disabled={stack.length === 0}
+          disabled={!stack.length}
           className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50 hover:bg-red-600 disabled:hover:bg-red-500"
         >
           Pop
+        </button>
+        <button
+          onClick={pushPauseItem}
+          className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+        >
+          Push Pause
+        </button>
+        <button
+          onClick={popPauseItem}
+          disabled={!stack.length}
+          className="px-4 py-2 bg-purple-500 text-white rounded disabled:opacity-50 hover:bg-purple-600 disabled:hover:bg-purple-500"
+        >
+          Pop Pause
         </button>
       </div>
 

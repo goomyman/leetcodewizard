@@ -2,30 +2,42 @@
 
 import { motion } from "framer-motion";
 
-export interface StackItemType {
+export type StackItemType = {
   i: number;
-  start: number;
+  path: string;
   color: string;
-  height: number;
-}
+  paused?: "push" | "pop"; // push pause (from left) OR pop pause (to right)
+};
 
-interface StackItemProps {
-  item: StackItemType;
-}
+export const STACK_ITEM_HEIGHT = 20; // constant height
 
-export default function StackItem({ item }: StackItemProps) {
+export default function StackItem({ item }: { item: StackItemType }) {
+  const { i, path, color, paused } = item;
+
   return (
     <motion.div
       layout
-      initial={{ opacity: 1, y: `${item.height}px` }}
-      animate={{ opacity: 1, y: 0, height: `${item.height}px` }}
-      exit={{ opacity: 1, y: 0, x: 60 }}
-      transition={{ duration: 0.5 }}
-      className="stack-item w-full rounded-md mb-1 flex justify-center items-end text-sm text-black font-bold"
-      style={{ backgroundColor: item.color }}
-      title={`i=${item.i}, start="${item.start}"`}
+      initial={
+        paused === "push"
+          ? { x: "-100%", opacity: 0 }
+          : paused === "pop"
+          ? { x: 0, opacity: 1 }
+          : { opacity: 0, y: 20 }
+      }
+      animate={
+        paused === "push"
+          ? { x: "-50%", opacity: 1 }
+          : paused === "pop"
+          ? { x: "50%", opacity: 1 }
+          : { x: 0, opacity: 1, y: 0 }
+      }
+      exit={{ opacity: 0, y: 20, height: 0, marginBottom: 0 }}
+      transition={{ duration: 0.5, type: "spring" }}
+      className="w-full rounded-md mb-1 flex justify-center items-end text-sm font-bold text-black"
+      style={{ backgroundColor: color, height: STACK_ITEM_HEIGHT }}
+      title={`i=${i}, path="${path}"`}
     >
-      {`i=${item.i}, start="${item.start}"`}
+      {`i=${i}, path="${path}"`}
     </motion.div>
   );
 }
