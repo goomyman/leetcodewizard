@@ -19,4 +19,4 @@ If you are licensing or marking one work, paste the code next to it. If you are 
 TLDR:  Feel free to to use, fork, study, or use it anyway you want,  just dont try to profit off it commercially as the idea is to share, build on ideas, and help others.  Providing credit helps provide exposer :).   
 
 # About Me
-Ex - Senior Developer backend developer at Microsoft for 18 years.  Currently looking for work.  <a href="https://www.linkedin.com/in/brian-peterson-a1bb197/">LinkedIn</a>
+Ex - Microsoft Senior Backend Developer for 18 years.  Currently looking for work.  <a href="https://www.linkedin.com/in/brian-peterson-a1bb197/">LinkedIn</a>
