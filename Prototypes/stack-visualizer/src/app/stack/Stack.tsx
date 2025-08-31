@@ -1,153 +1,144 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import StackItem from "./StackItem";
-import { StackItemType, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { StackItemType, StackItemState } from "./StackItemConstants";
+import { useHistory } from "./useHistory";
 
-type StackState = StackItemType[];
+export default function Stack() {
+  const nextIdRef = useRef(0);
+  const nextIRef = useRef(0);
 
-export default function StackControl() {
+  // Initialize history with empty stack
   const [stack, setStack] = useState<StackItemType[]>([]);
-  const [history, setHistory] = useState<StackState[]>([]);
-  const [historyIndex, setHistoryIndex] = useState<number>(-1);
-
-  const nextIdRef = useRef<number>(0);
+  const history = useHistory<StackItemType[]>(stack);
 
   const getRandomColor = () =>
     `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
 
-  const recordHistory = (newStack: StackItemType[]) => {
-    const slicedHistory = history.slice(0, historyIndex + 1);
-    setHistory([...slicedHistory, newStack]);
-    setHistoryIndex((s) => s + 1);
-  };
+  const stopAllPrePop = (prev: StackItemType[]) =>
+    prev.map(it =>
+      it.state === "prePop" ? { ...it, state: "push" as StackItemState } : it
+    );
+
+  // --- Stack actions ---
 
   const prePush = () => {
-    if (stack[0]?.state === "prePush") return; // only one prePush at top
+    if (stack[0]?.state === "prePush") return;
+
     const id = nextIdRef.current++;
     const newItem: StackItemType = {
       id,
+      i: nextIRef.current++,
+      start: stack.length,
       color: getRandomColor(),
-      state: "prePush",
-      i: stack.length,
-      start: 0,
+      state: "prePush" as StackItemState,
     };
-    const newStack = [newItem, ...stack];
+
+    const newStack = [newItem, ...stopAllPrePop(stack)];
     setStack(newStack);
-    recordHistory(newStack);
+    history.push(newStack);
   };
 
   const push = () => {
-    if (!stack.length) return prePush(); // if empty, create one directly
-    const top = stack[0];
-    if (top.state === "prePush") {
-      const newStack = [
-        { ...top, state: "push" },
-        ...stack.slice(1),
-      ];
-      setStack(newStack);
-      recordHistory(newStack);
+    if (stack.length > 0 && stack[0].state === "prePush") {
+      const next = [...stack];
+      next[0] = { ...next[0], state: "push" as StackItemState };
+      setStack(next);
+      history.push(next);
     } else {
-      // create a new push item directly in the middle
       const id = nextIdRef.current++;
       const newItem: StackItemType = {
         id,
+        i: nextIRef.current++,
+        start: stack.length,
         color: getRandomColor(),
-        state: "push",
-        i: stack.length,
-        start: 0,
+        state: "push" as StackItemState,
       };
-      const newStack = [newItem, ...stack];
+      const newStack = [newItem, ...stopAllPrePop(stack)];
       setStack(newStack);
-      recordHistory(newStack);
+      history.push(newStack);
     }
   };
 
   const prePop = () => {
-    const top = stack[0];
-    if (!top || top.state === "prePop") return;
-    const newStack = [{ ...top, state: "prePop" }, ...stack.slice(1)];
-    setStack(newStack);
-    recordHistory(newStack);
+    if (!stack.length || stack[0].state === "prePush") return;
+
+    const next = [...stack];
+    next[0] = { ...next[0], state: "prePop" as StackItemState };
+    setStack(next);
+    history.push(next);
   };
 
   const pop = () => {
     if (!stack.length) return;
-    const top = stack[0];
-    if (top.state === "prePop") {
-      const newStack = stack.slice(1);
-      setStack(newStack);
-      recordHistory(newStack);
-    } else {
-      const newStack = [{ ...top, state: "pop" }, ...stack.slice(1)];
-      setStack(newStack);
-      // schedule removal after animation duration
-      setTimeout(() => {
-        const finalStack = stack.slice(1);
-        setStack(finalStack);
-        recordHistory(finalStack);
-      }, 400); // match animation
+
+    const next = [...stack];
+    next.shift(); // remove top
+    setStack(next);
+    history.push(next);
+  };
+
+  // --- Optional: automatically convert prePush → push after delay ---
+  useEffect(() => {
+    if (stack[0]?.state === "prePush") {
+      const timer = setTimeout(() => push(), 500); // adjust delay as needed
+      return () => clearTimeout(timer);
     }
-  };
+  }, [stack]);
 
+  // --- History navigation ---
   const back = () => {
-    if (historyIndex <= 0) return;
-    const newIndex = historyIndex - 1;
-    setStack(history[newIndex]);
-    setHistoryIndex(newIndex);
+    history.back();
+    setStack(history.current);
   };
-
   const forward = () => {
-    if (historyIndex >= history.length - 1) return;
-    const newIndex = historyIndex + 1;
-    setStack(history[newIndex]);
-    setHistoryIndex(newIndex);
+    history.forward();
+    setStack(history.current);
   };
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 mb-4 justify-center">
+      <div className="flex gap-2 mb-4">
         <button
           onClick={back}
-          disabled={historyIndex <= 0}
-          className="px-4 py-2 bg-gray-400 text-white rounded disabled:opacity-50"
+          disabled={!history.canGoBack}
+          className="px-3 py-1 bg-gray-500 text-white rounded disabled:opacity-50"
         >
           Back
         </button>
         <button
           onClick={forward}
-          disabled={historyIndex >= history.length - 1}
-          className="px-4 py-2 bg-gray-400 text-white rounded disabled:opacity-50"
+          disabled={!history.canGoForward}
+          className="px-3 py-1 bg-gray-500 text-white rounded disabled:opacity-50"
         >
           Forward
         </button>
         <button
           onClick={prePush}
           disabled={stack[0]?.state === "prePush"}
-          className="px-4 py-2 bg-yellow-500 text-white rounded disabled:opacity-50"
+          className="px-3 py-1 bg-blue-300 text-white rounded disabled:opacity-50"
         >
           PrePush
         </button>
         <button
           onClick={push}
-          className="px-4 py-2 bg-blue-500 text-white rounded"
+          className="px-3 py-1 bg-blue-500 text-white rounded"
         >
           Push
         </button>
         <button
           onClick={prePop}
-          disabled={
-            !stack.length || stack[0]?.state === "prePop" || stack[0]?.state === "prePush"
-          }
-          className="px-4 py-2 bg-orange-500 text-white rounded disabled:opacity-50"
+          disabled={stack[0]?.state === "prePush" || stack.length === 0}
+          className="px-3 py-1 bg-red-300 text-white rounded disabled:opacity-50"
         >
           PrePop
         </button>
         <button
           onClick={pop}
-          disabled={!stack.length || stack[0]?.state === "prePush"}
-          className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50"
+          disabled={stack.length === 0}
+          className="px-3 py-1 bg-red-500 text-white rounded disabled:opacity-50"
         >
           Pop
         </button>
@@ -155,8 +146,12 @@ export default function StackControl() {
 
       <div className="stack-container flex flex-col justify-end items-center w-72 h-96 border border-transparent">
         <AnimatePresence>
-          {stack.map((item) => (
-            <StackItem key={item.id} item={item} />
+          {stack.map(item => (
+            <StackItem
+              key={item.id}
+              item={item}
+              stopShaking={item.state !== "prePop"}
+            />
           ))}
         </AnimatePresence>
       </div>
