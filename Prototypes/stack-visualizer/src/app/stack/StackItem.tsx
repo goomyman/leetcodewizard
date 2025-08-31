@@ -15,6 +15,7 @@ export default function StackItem({ item, stopShaking }: StackItemProps) {
 
   const controls = useAnimation();
 
+  // PrePop animation: gentle vertical bounce + pulse
   useEffect(() => {
     if (isPrePop && !stopShaking) {
       controls.start({
@@ -28,7 +29,7 @@ export default function StackItem({ item, stopShaking }: StackItemProps) {
       });
     } else {
       controls.stop();
-      controls.set({ y: 0, scale: 1 }); // reset
+      controls.set({ y: 0, scale: 1 });
     }
   }, [isPrePop, stopShaking, controls]);
 
@@ -43,9 +44,10 @@ export default function StackItem({ item, stopShaking }: StackItemProps) {
         alignItems: "center",
         justifyContent: "center",
         boxShadow: isPrePush ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
-        zIndex: isPrePush ? 10 : 1,
+        zIndex: isPrePush ? 10 : 1
       }}
-      animate={isPrePush ? { y: -10, scale: 1.05 } : controls}
+      layout // smooth transition from floating → normal stack
+      animate={isPrePop ? controls : isPrePush ? { y: -15, scale: 1.10 } : { y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="text-sm font-bold text-black"
     >

@@ -13,14 +13,14 @@ export default function Stack({ stack }: StackProps) {
 
   return (
     <div
-      className="stack-container flex flex-col justify-end items-center border border-transparent"
+      className="stack-container flex flex-col justify-end items-center border border-transparent relative"
       style={{ width: STACK_ITEM_WIDTH, minHeight: STACK_ITEM_HEIGHT * 20 }}
     >
       <AnimatePresence>
         {safeStack.map(item => (
           <motion.div
             key={item.id}
-            layout
+            layout // ensures smooth movement when items reorder
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
