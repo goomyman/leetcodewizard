@@ -55,7 +55,7 @@ export default function StackControl({
       <button
         onClick={onPush}
         disabled={disabledPush}
-        className="px-3 py-1 bg-blue-500 text-white rounded"
+        className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
       >
         Push
       </button>

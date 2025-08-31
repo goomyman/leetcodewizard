@@ -65,9 +65,9 @@ export default function StackManager() {
   const push = () => {
     if (prePushItem) {
       const newStack = [
-        { ...prePushItem, state: "push" } as StackItemType, // Cast after spreading
-        ...stack
-      ]
+        { ...prePushItem, state: "push" } as StackItemType,
+        ...stack,
+      ];
 
       setStack(newStack);
       setPrePushItem(null);
@@ -124,19 +124,13 @@ export default function StackManager() {
 
   const topState = stack[0]?.state;
 
+  // Button enable/disable logic
   let disabledPrePush = !!prePushItem || topState === "prePop";
-  let disabledPush = false;
+  let disabledPush = !!prePushItem || topState === "prePop";
   let disabledPrePop = topState !== "push";
   let disabledPop = !stack.length || topState === "prePush";
   let canGoBack = history.canGoBack;
   let canGoForward = history.canGoForward;
-
-  if (prePushItem) {
-    disabledPrePush = true;
-    disabledPrePop = true;
-    disabledPop = true;
-    disabledPush = false;
-  }
 
   return (
     <div className="p-4 flex flex-col items-center gap-4 relative">
@@ -155,28 +149,32 @@ export default function StackManager() {
         canGoForward={canGoForward}
       />
 
-      <Stack stack={stack} />
+      {/* Stack container with relative position for floating item */}
+      <div style={{ position: "relative", minHeight: STACK_ITEM_HEIGHT }}>
+        <Stack stack={stack} />
 
-      {prePushItem && (
-        <div
-          style={{
-            position: "absolute",
-            top: stack.length * STACK_ITEM_HEIGHT - 5,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "288px",
-            height: STACK_ITEM_HEIGHT,
-            pointerEvents: "none",
-            zIndex: 10,
-          }}
-        >
-          <StackItem
-            item={prePushItem}
-            stopShaking={false}
-            isFloatingPrePush
-          />
-        </div>
-      )}
+        {prePushItem && (
+          <div
+            style={{
+              position: "absolute",
+              top: -STACK_ITEM_HEIGHT - 5,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "288px",
+              height: STACK_ITEM_HEIGHT,
+              pointerEvents: "none",
+              zIndex: 10
+            }}
+          >
+            <StackItem
+              item={prePushItem}
+              stopShaking={false}
+              isFloatingPrePush
+            />
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
