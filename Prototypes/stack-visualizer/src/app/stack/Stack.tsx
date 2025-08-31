@@ -1,26 +1,36 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import StackItem from "./StackItem";
-import { StackItemType } from "./StackItemConstants";
+import { StackItemType, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 
 interface StackProps {
-  stack: StackItemType[]; // always an array
+  stack: StackItemType[];
 }
 
 export default function Stack({ stack }: StackProps) {
-  // safety check
   const safeStack = stack || [];
 
   return (
-    <div className="stack-container flex flex-col justify-end items-center w-72 h-96 border border-transparent">
+    <div
+      className="stack-container flex flex-col justify-end items-center border border-transparent"
+      style={{ width: STACK_ITEM_WIDTH, minHeight: STACK_ITEM_HEIGHT }}
+    >
       <AnimatePresence>
         {safeStack.map(item => (
-          <StackItem
+          <motion.div
             key={item.id}
-            item={item}
-            stopShaking={item.state !== "prePop"}
-          />
+            layout
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <StackItem
+              item={item}
+              stopShaking={item.state !== "prePop"}
+            />
+          </motion.div>
         ))}
       </AnimatePresence>
     </div>

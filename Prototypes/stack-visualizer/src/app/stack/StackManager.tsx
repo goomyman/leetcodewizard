@@ -3,13 +3,11 @@
 import React from "react";
 import Stack from "./Stack";
 import StackControl from "./StackControl";
-import StackItem from "./StackItem";
 import { useHistory } from "./useHistory";
-import { StackItemType, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { StackItemType, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 
 let idCounter = 0;
 
-// Allowed StackItem states
 const allowedStates: StackItemType["state"][] = [
   "start",
   "push",
@@ -18,7 +16,6 @@ const allowedStates: StackItemType["state"][] = [
   "popping",
 ];
 
-// Ensure an item has a valid state
 const sanitizeStackItem = (item: StackItemType): StackItemType => ({
   ...item,
   state: allowedStates.includes(item.state) ? item.state : "start",
@@ -26,29 +23,25 @@ const sanitizeStackItem = (item: StackItemType): StackItemType => ({
 
 export default function StackManager() {
   const [stack, setStack] = React.useState<StackItemType[]>([]);
-  const [prePushItem, setPrePushItem] = React.useState<StackItemType | null>(null);
   const history = useHistory<StackItemType[]>(stack);
 
-  const getRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
+  const getRandomColor = () =>
+    `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
 
-  // Only top item can be prePop
   const normalizePrePop = (arr: StackItemType[]): StackItemType[] =>
-    arr
-      .map((item, index) =>
-        item.state === "prePop" && index !== 0
-          ? { ...item, state: "push" } as StackItemType
-          : item
-      )
-      .map(item => sanitizeStackItem(item) as StackItemType);
+    arr.map((item, index) =>
+      item.state === "prePop" && index !== 0
+        ? { ...item, state: "push" } as StackItemType
+        : item
+    ).map(sanitizeStackItem);
 
-  // Stop all prePop before pushing a new item
   const stopAllPrePop = (arr: StackItemType[]): StackItemType[] =>
-    arr
-      .map(it => (it.state === "prePop" ? { ...it, state: "push" } as StackItemType : it))
-      .map(item => sanitizeStackItem(item) as StackItemType);
+    arr.map(it =>
+      it.state === "prePop" ? { ...it, state: "push" } as StackItemType : it
+    ).map(sanitizeStackItem);
 
   const prePush = () => {
-    if (prePushItem || stack[0]?.state === "prePop") return;
+    if (stack[0]?.state === "prePop") return;
 
     const newItem: StackItemType = {
       id: idCounter++,
@@ -58,21 +51,21 @@ export default function StackManager() {
       state: "prePush",
     };
 
-    setPrePushItem(newItem);
-    history.push([...stack, newItem]);
+    const newStack = [newItem, ...stack];
+    setStack(newStack);
+    history.push(newStack);
   };
 
   const push = () => {
-    if (prePushItem) {
-      const newStack = [
-        { ...prePushItem, state: "push" } as StackItemType,
-        ...stack,
-      ];
+    let newStack: StackItemType[];
 
-      setStack(newStack);
-      setPrePushItem(null);
-      history.push(newStack);
+    if (stack[0]?.state === "prePush") {
+      newStack = [{ ...stack[0], state: "push" } as StackItemType, ...stack.slice(1)];
+    } else if (stack[0]?.state === "prePop") {
+      // convert top prePop to push
+      newStack = [{ ...stack[0], state: "push" } as StackItemType, ...stack.slice(1)];
     } else {
+      // push new item
       const newItem: StackItemType = {
         id: idCounter++,
         i: stack.length,
@@ -80,25 +73,24 @@ export default function StackManager() {
         color: getRandomColor(),
         state: "push",
       };
-      const newStack = [newItem, ...stopAllPrePop(stack)];
-      setStack(newStack);
-      history.push(newStack);
+      newStack = [newItem, ...stack];
     }
+
+    setStack(newStack);
+    history.push(newStack);
   };
 
   const prePop = () => {
     if (!stack.length || stack[0].state !== "push") return;
-    const next = [...stack];
-    next[0] = { ...next[0], state: "prePop" } as StackItemType;
-    setStack(next.map(item => sanitizeStackItem(item) as StackItemType));
+    const next = [{ ...stack[0], state: "prePop" } as StackItemType, ...stack.slice(1)];
+    setStack(next);
     history.push(next);
   };
 
   const pop = () => {
     if (!stack.length || stack[0].state === "prePush") return;
-    const next = [...stack];
-    next.shift();
-    setStack(next.map(item => sanitizeStackItem(item) as StackItemType));
+    const next = stack.slice(1);
+    setStack(next);
     history.push(next);
   };
 
@@ -124,9 +116,8 @@ export default function StackManager() {
 
   const topState = stack[0]?.state;
 
-  // Button enable/disable logic
-  let disabledPrePush = !!prePushItem || topState === "prePop";
-  let disabledPush = !!prePushItem || topState === "prePop";
+  let disabledPrePush = topState === "prePush" || topState === "prePop";
+  let disabledPush = topState === "prePop"; 
   let disabledPrePop = topState !== "push";
   let disabledPop = !stack.length || topState === "prePush";
   let canGoBack = history.canGoBack;
@@ -149,32 +140,7 @@ export default function StackManager() {
         canGoForward={canGoForward}
       />
 
-      {/* Stack container with relative position for floating item */}
-      <div style={{ position: "relative", minHeight: STACK_ITEM_HEIGHT }}>
-        <Stack stack={stack} />
-
-        {prePushItem && (
-          <div
-            style={{
-              position: "absolute",
-              top: -STACK_ITEM_HEIGHT - 5,
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "288px",
-              height: STACK_ITEM_HEIGHT,
-              pointerEvents: "none",
-              zIndex: 10
-            }}
-          >
-            <StackItem
-              item={prePushItem}
-              stopShaking={false}
-              isFloatingPrePush
-            />
-          </div>
-        )}
-      </div>
-
+      <Stack stack={stack} />
     </div>
   );
 }

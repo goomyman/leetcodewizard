@@ -1,62 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
-import { motion, useAnimation } from "framer-motion";
-import { StackItemType, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { motion } from "framer-motion";
+import { StackItemType, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 
 interface StackItemProps {
   item: StackItemType;
-  stopShaking?: boolean;
-  isFloatingPrePush?: boolean;
+  stopShaking: boolean;
 }
 
-export default function StackItem({
-  item,
-  stopShaking = false,
-  isFloatingPrePush = false,
-}: StackItemProps) {
-  const controls = useAnimation();
-
-  useEffect(() => {
-    if (item.state === "prePop" && !stopShaking) {
-      controls.start({
-        x: [-5, 5, -5, 5, 0],
-        transition: { duration: 0.6, repeat: Infinity, ease: "easeInOut" },
-      });
-    } else {
-      controls.stop();
-      controls.set({ x: 0 });
-    }
-  }, [item.state, stopShaking, controls]);
-
-  const initial =
-    item.state === "prePush" && !isFloatingPrePush
-      ? { x: -50, y: -20, opacity: 0 }
-      : { x: 0, y: 0, opacity: 0 };
-
-  const animate =
-    item.state === "prePush" && !isFloatingPrePush
-      ? { x: 0, y: 0, opacity: 1 }
-      : { x: 0, y: 0, opacity: 1 };
+export default function StackItem({ item, stopShaking }: StackItemProps) {
+  const isPrePush = item.state === "prePush";
 
   return (
     <motion.div
-      layout
-      initial={initial}
-      animate={animate}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.45, type: "spring", stiffness: 200, damping: 20 }}
-      className="w-full mb-1"
-      style={{ height: STACK_ITEM_HEIGHT }}
+      style={{
+        width: STACK_ITEM_WIDTH,
+        height: STACK_ITEM_HEIGHT,
+        backgroundColor: item.color,
+        borderRadius: 8,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: isPrePush ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
+        zIndex: isPrePush ? 10 : 1,
+      }}
+      animate={{
+        y: isPrePush ? -10 : 0,  // float above slightly
+        scale: isPrePush ? 1.05 : 1,
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="text-sm font-bold text-black" // Tailwind text styling
     >
-      <motion.div
-        animate={controls}
-        className="w-full h-full rounded-md flex justify-center items-end text-sm font-bold text-black"
-        style={{ backgroundColor: item.color }}
-        title={`id=${item.id}, i=${item.i}, start=${item.start}`}
-      >
-        {`i=${item.i}, start=${item.start}`}
-      </motion.div>
+      <span>{item.id}</span>
     </motion.div>
   );
 }
