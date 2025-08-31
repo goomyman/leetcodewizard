@@ -14,7 +14,7 @@ export default function Stack({ stack }: StackProps) {
   return (
     <div
       className="stack-container flex flex-col justify-end items-center border border-transparent"
-      style={{ width: STACK_ITEM_WIDTH, minHeight: STACK_ITEM_HEIGHT }}
+      style={{ width: STACK_ITEM_WIDTH, minHeight: STACK_ITEM_HEIGHT * 20 }}
     >
       <AnimatePresence>
         {safeStack.map(item => (

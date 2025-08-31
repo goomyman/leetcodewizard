@@ -16,14 +16,17 @@ const allowedStates: StackItemType["state"][] = [
   "popping",
 ];
 
-const sanitizeStackItem = (item: StackItemType): StackItemType => ({
-  ...item,
-  state: allowedStates.includes(item.state) ? item.state : "start",
-});
+// Type guard to ensure StackItemType
+const isValidStackItem = (item: any): item is StackItemType =>
+  item &&
+  typeof item.id === "number" &&
+  typeof item.i === "number" &&
+  typeof item.start === "number" &&
+  typeof item.color === "string" &&
+  allowedStates.includes(item.state);
 
 export default function StackManager() {
-  const [stack, setStack] = React.useState<StackItemType[]>([]);
-  const history = useHistory<StackItemType[]>(stack);
+  const history = useHistory<StackItemType[]>([]);
 
   const getRandomColor = () =>
     `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
@@ -31,16 +34,18 @@ export default function StackManager() {
   const normalizePrePop = (arr: StackItemType[]): StackItemType[] =>
     arr.map((item, index) =>
       item.state === "prePop" && index !== 0
-        ? { ...item, state: "push" } as StackItemType
+        ? { ...item, state: "push" }
         : item
-    ).map(sanitizeStackItem);
+    ).filter(isValidStackItem);
 
   const stopAllPrePop = (arr: StackItemType[]): StackItemType[] =>
     arr.map(it =>
-      it.state === "prePop" ? { ...it, state: "push" } as StackItemType : it
-    ).map(sanitizeStackItem);
+      it.state === "prePop" ? { ...it, state: "push" } : it
+    ).filter(isValidStackItem);
 
   const prePush = () => {
+    const stack = history.current;
+
     if (stack[0]?.state === "prePop") return;
 
     const newItem: StackItemType = {
@@ -51,21 +56,16 @@ export default function StackManager() {
       state: "prePush",
     };
 
-    const newStack = [newItem, ...stack];
-    setStack(newStack);
-    history.push(newStack);
+    history.push([newItem, ...stack]);
   };
 
   const push = () => {
+    const stack = history.current;
     let newStack: StackItemType[];
 
-    if (stack[0]?.state === "prePush") {
-      newStack = [{ ...stack[0], state: "push" } as StackItemType, ...stack.slice(1)];
-    } else if (stack[0]?.state === "prePop") {
-      // convert top prePop to push
-      newStack = [{ ...stack[0], state: "push" } as StackItemType, ...stack.slice(1)];
+    if (stack[0]?.state === "prePush" || stack[0]?.state === "prePop") {
+      newStack = [{ ...stack[0], state: "push" }, ...stack.slice(1)];
     } else {
-      // push new item
       const newItem: StackItemType = {
         id: idCounter++,
         i: stack.length,
@@ -76,22 +76,22 @@ export default function StackManager() {
       newStack = [newItem, ...stack];
     }
 
-    setStack(newStack);
     history.push(newStack);
   };
 
   const prePop = () => {
+    const stack = history.current;
     if (!stack.length || stack[0].state !== "push") return;
-    const next = [{ ...stack[0], state: "prePop" } as StackItemType, ...stack.slice(1)];
-    setStack(next);
+
+    const next = [{ ...stack[0], state: "prePop" }, ...stack.slice(1)];
     history.push(next);
   };
 
   const pop = () => {
+    const stack = history.current;
     if (!stack.length || stack[0].state === "prePush") return;
-    const next = stack.slice(1);
-    setStack(next);
-    history.push(next);
+
+    history.push(stack.slice(1));
   };
 
   const back = () => {
@@ -101,7 +101,6 @@ export default function StackManager() {
 
     const restored = normalizePrePop([...history.history[prevIndex]]);
     history.setIndex(prevIndex);
-    setStack(restored);
   };
 
   const forward = () => {
@@ -111,17 +110,17 @@ export default function StackManager() {
 
     const restored = normalizePrePop([...history.history[nextIndex]]);
     history.setIndex(nextIndex);
-    setStack(restored);
   };
 
+  const stack = history.current;
   const topState = stack[0]?.state;
 
-  let disabledPrePush = topState === "prePush" || topState === "prePop";
-  let disabledPush = topState === "prePop"; 
-  let disabledPrePop = topState !== "push";
-  let disabledPop = !stack.length || topState === "prePush";
-  let canGoBack = history.canGoBack;
-  let canGoForward = history.canGoForward;
+  const disabledPrePush = topState === "prePush" || topState === "prePop";
+  const disabledPush = topState === "prePop"; 
+  const disabledPrePop = topState !== "push";
+  const disabledPop = !stack.length || topState === "prePush";
+  const canGoBack = history.canGoBack;
+  const canGoForward = history.canGoForward;
 
   return (
     <div className="p-4 flex flex-col items-center gap-4 relative">
