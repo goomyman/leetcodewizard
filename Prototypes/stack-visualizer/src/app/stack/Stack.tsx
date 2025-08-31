@@ -17,7 +17,7 @@ export default function Stack({ stack }: StackProps) {
       style={{ width: STACK_ITEM_WIDTH, minHeight: STACK_ITEM_HEIGHT * 20 }}
     >
       <AnimatePresence>
-        {safeStack.map(item => (
+        {safeStack.map((item, index)  => (
           <motion.div
             key={item.id}
             layout // ensures smooth movement when items reorder
@@ -29,6 +29,7 @@ export default function Stack({ stack }: StackProps) {
             <StackItem
               item={item}
               stopShaking={item.state !== "prePop"}
+              stackIndex={stack.length - index}
             />
           </motion.div>
         ))}

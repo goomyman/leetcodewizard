@@ -7,9 +7,10 @@ import { StackItemType, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemC
 interface StackItemProps {
   item: StackItemType;
   stopShaking: boolean;
+  stackIndex: number;
 }
 
-export default function StackItem({ item, stopShaking }: StackItemProps) {
+export default function StackItem({ item, stopShaking, stackIndex }: StackItemProps) {
   const isPrePush = item.state === "prePush";
   const isPrePop = item.state === "prePop";
 
@@ -51,7 +52,12 @@ export default function StackItem({ item, stopShaking }: StackItemProps) {
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="text-sm font-bold text-black"
     >
-      <span>{item.id}</span>
+    <div className="w-full text-left font-bold text-lg pl-3 flex-1">
+    {stackIndex}
+    </div>
+    <div className="w-full text-center">
+      i: {item.i} | start: {item.start}
+    </div>
     </motion.div>
   );
 }
