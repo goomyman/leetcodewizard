@@ -4,13 +4,17 @@ import { useEffect } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { StackItemType, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 
+interface StackItemProps {
+  item: StackItemType;
+  stopShaking?: boolean;
+  isFloatingPrePush?: boolean;
+}
+
 export default function StackItem({
   item,
   stopShaking = false,
-}: {
-  item: StackItemType;
-  stopShaking?: boolean;
-}) {
+  isFloatingPrePush = false,
+}: StackItemProps) {
   const controls = useAnimation();
 
   useEffect(() => {
@@ -26,12 +30,14 @@ export default function StackItem({
   }, [item.state, stopShaking, controls]);
 
   const initial =
-    item.state === "prePush"
+    item.state === "prePush" && !isFloatingPrePush
       ? { x: -50, y: -20, opacity: 0 }
       : { x: 0, y: 0, opacity: 0 };
 
   const animate =
-    item.state === "prePush" ? { x: 0, y: 0, opacity: 1 } : { opacity: 1 };
+    item.state === "prePush" && !isFloatingPrePush
+      ? { x: 0, y: 0, opacity: 1 }
+      : { x: 0, y: 0, opacity: 1 };
 
   return (
     <motion.div

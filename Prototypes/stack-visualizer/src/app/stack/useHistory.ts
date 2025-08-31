@@ -4,7 +4,7 @@ export function useHistory<T>(initial: T) {
   const [history, setHistory] = useState<T[]>([initial]);
   const [index, setIndex] = useState(0);
 
-  const current = history[index];
+  const current = history[index] ?? initial;
 
   const push = (state: T) => {
     const newHistory = history.slice(0, index + 1);
@@ -14,15 +14,11 @@ export function useHistory<T>(initial: T) {
   };
 
   const back = () => {
-    if (index > 0) {
-      setIndex(index - 1);
-    }
+    if (index > 0) setIndex(index - 1);
   };
 
   const forward = () => {
-    if (index < history.length - 1) {
-      setIndex(index + 1);
-    }
+    if (index < history.length - 1) setIndex(index + 1);
   };
 
   return {
@@ -30,6 +26,7 @@ export function useHistory<T>(initial: T) {
     push,
     back,
     forward,
+    setIndex, // <-- add this
     canGoBack: index > 0,
     canGoForward: index < history.length - 1,
     history,
