@@ -3,94 +3,56 @@
 import React from "react";
 import Stack from "./Stack";
 import StackControl from "./StackControl";
+import SliderControl from "./SliderControl";
 import { useHistory } from "./useHistory";
-import { StackItemType, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { StackItemType } from "./StackItemConstants";
 
 let idCounter = 0;
-
-const allowedStates: StackItemType["state"][] = [
-  "start",
-  "push",
-  "prePush",
-  "prePop",
-  "popping",
-];
-
-// Type guard to ensure StackItemType
+const allowedStates: StackItemType["state"][] = ["start", "push", "prePush", "prePop", "popping"];
 const isValidStackItem = (item: any): item is StackItemType =>
-  item &&
-  typeof item.id === "number" &&
-  typeof item.i === "number" &&
-  typeof item.start === "number" &&
-  typeof item.color === "string" &&
-  allowedStates.includes(item.state);
+  item && typeof item.id === "number" && typeof item.i === "number" && typeof item.start === "number" && typeof item.color === "string" && allowedStates.includes(item.state);
 
 export default function StackManager() {
   const history = useHistory<StackItemType[]>([]);
 
-  const getRandomColor = () =>
-    `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
+  const getRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
 
   const normalizePrePop = (arr: StackItemType[]): StackItemType[] =>
-    arr.map((item, index) =>
-      item.state === "prePop" && index !== 0
-        ? { ...item, state: "push" }
-        : item
-    ).filter(isValidStackItem);
+    arr.map((item, index) => item.state === "prePop" && index !== 0 ? { ...item, state: "push" as StackItemType["state"] } : item)
+       .filter(isValidStackItem);
 
   const stopAllPrePop = (arr: StackItemType[]): StackItemType[] =>
-    arr.map(it =>
-      it.state === "prePop" ? { ...it, state: "push" } : it
-    ).filter(isValidStackItem);
+    arr.map(it => it.state === "prePop" ? { ...it, state: "push" as StackItemType["state"] } : it).filter(isValidStackItem);
 
   const prePush = () => {
     const stack = history.current;
-
     if (stack[0]?.state === "prePop") return;
-
-    const newItem: StackItemType = {
-      id: idCounter++,
-      i: stack.length,
-      start: stack.length,
-      color: getRandomColor(),
-      state: "prePush",
-    };
-
+    const newItem: StackItemType = { id: idCounter++, i: stack.length, start: stack.length, color: getRandomColor(), state: "prePush" as StackItemType["state"] };
     history.push([newItem, ...stack]);
   };
 
   const push = () => {
     const stack = history.current;
     let newStack: StackItemType[];
-
     if (stack[0]?.state === "prePush" || stack[0]?.state === "prePop") {
-      newStack = [{ ...stack[0], state: "push" }, ...stack.slice(1)];
+      newStack = [{ ...stack[0], state: "push" as StackItemType["state"] }, ...stack.slice(1)];
     } else {
-      const newItem: StackItemType = {
-        id: idCounter++,
-        i: stack.length,
-        start: stack.length,
-        color: getRandomColor(),
-        state: "push",
-      };
+      const newItem: StackItemType = { id: idCounter++, i: stack.length, start: stack.length, color: getRandomColor(), state: "push" as StackItemType["state"] };
       newStack = [newItem, ...stack];
     }
-
     history.push(newStack);
   };
 
   const prePop = () => {
     const stack = history.current;
     if (!stack.length || stack[0].state !== "push") return;
-
-    const next = [{ ...stack[0], state: "prePop" }, ...stack.slice(1)];
+    const next = [{ ...stack[0], state: "prePop" as StackItemType["state"] }, ...stack.slice(1)];
     history.push(next);
   };
 
   const pop = () => {
     const stack = history.current;
     if (!stack.length || stack[0].state === "prePush") return;
-
     history.push(stack.slice(1));
   };
 
@@ -98,8 +60,7 @@ export default function StackManager() {
     if (!history.canGoBack) return;
     const prevIndex = history.index - 1;
     if (prevIndex < 0) return;
-
-    const restored = normalizePrePop([...history.history[prevIndex]]);
+    normalizePrePop([...history.history[prevIndex]]);
     history.setIndex(prevIndex);
   };
 
@@ -107,8 +68,7 @@ export default function StackManager() {
     if (!history.canGoForward) return;
     const nextIndex = history.index + 1;
     if (nextIndex >= history.history.length) return;
-
-    const restored = normalizePrePop([...history.history[nextIndex]]);
+    normalizePrePop([...history.history[nextIndex]]);
     history.setIndex(nextIndex);
   };
 
@@ -116,14 +76,14 @@ export default function StackManager() {
   const topState = stack[0]?.state;
 
   const disabledPrePush = topState === "prePush" || topState === "prePop";
-  const disabledPush = topState === "prePop"; 
+  const disabledPush = topState === "prePop";
   const disabledPrePop = topState !== "push";
   const disabledPop = !stack.length || topState === "prePush";
   const canGoBack = history.canGoBack;
   const canGoForward = history.canGoForward;
 
   return (
-    <div className="p-4 flex flex-col items-center gap-4 relative">
+    <div className="p-4 flex flex-col items-center gap-4 relative w-full max-w-md">
       <StackControl
         onPrePush={prePush}
         onPush={push}
@@ -137,6 +97,12 @@ export default function StackManager() {
         disabledPop={disabledPop}
         canGoBack={canGoBack}
         canGoForward={canGoForward}
+      />
+
+      <SliderControl
+        historyLength={history.history.length}
+        currentIndex={history.index}
+        onChange={history.setIndex}
       />
 
       <Stack stack={stack} />
