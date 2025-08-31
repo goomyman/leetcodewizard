@@ -16,12 +16,15 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
 
   const controls = useAnimation();
 
-  // PrePop animation: gentle vertical bounce + pulse
+  // PrePop / PrePush animation: gentle vertical bounce + pulse
   useEffect(() => {
-    if (isPrePop && !stopShaking) {
+    const shouldAnimate = (isPrePop || isPrePush) && !stopShaking;
+    const baseY = isPrePush ? -25 : 0;
+
+    if (shouldAnimate) {
       controls.start({
-        y: [0, 0, 0, 0, 0],       // gentle up/down bounce
-        scale: [1, 1.05, 1, 1.05, 1], // subtle pulsing
+        y: [baseY, baseY - 6, baseY, baseY - 6, baseY],
+        scale: [1, 1.05, 1, 1.05, 1],
         transition: {
           duration: 2,
           repeat: Infinity,
@@ -30,9 +33,13 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
       });
     } else {
       controls.stop();
-      controls.set({ y: 0, scale: 1 });
+      controls.start({
+        y: 0,
+        scale: 1,
+        transition: { type: "spring", stiffness: 300, damping: 20 },
+      });
     }
-  }, [isPrePop, stopShaking, controls]);
+  }, [isPrePop, isPrePush, stopShaking, controls]);
 
   return (
     <motion.div
@@ -45,19 +52,18 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
         alignItems: "center",
         justifyContent: "center",
         boxShadow: isPrePush ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
-        zIndex: isPrePush ? 10 : 1
+        zIndex: isPrePush ? 10 : 1,
       }}
       layout // smooth transition from floating → normal stack
-      animate={isPrePop ? controls : isPrePush ? { y: -15, scale: 1.10 } : { y: 0, scale: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      animate={controls}
       className="text-sm font-bold text-black"
     >
-    <div className="w-full text-left font-bold text-lg pl-3 flex-1">
-    {stackIndex}
-    </div>
-    <div className="w-full text-center">
-      i: {item.i} | start: {item.start}
-    </div>
+      <div className="w-full text-left font-bold text-lg pl-3 flex-1">
+        {stackIndex}
+      </div>
+      <div className="w-full text-center">
+        i = {item.i} | start = {item.start} | &nbsp;&nbsp;<em> result = </em>
+      </div>
     </motion.div>
   );
 }

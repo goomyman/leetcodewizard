@@ -28,7 +28,7 @@ export default function Stack({ stack }: StackProps) {
           >
             <StackItem
               item={item}
-              stopShaking={item.state !== "prePop"}
+              stopShaking={item.state !== "prePop" && item.state !== "prePush"}
               stackIndex={stack.length - index}
             />
           </motion.div>
