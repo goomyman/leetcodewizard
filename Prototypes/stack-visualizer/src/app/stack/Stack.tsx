@@ -137,14 +137,16 @@ export default function StackControl() {
         </button>
         <button
           onClick={prePop}
-          disabled={stack[0]?.state === "prePop" || !stack.length}
+          disabled={
+            !stack.length || stack[0]?.state === "prePop" || stack[0]?.state === "prePush"
+          }
           className="px-4 py-2 bg-orange-500 text-white rounded disabled:opacity-50"
         >
           PrePop
         </button>
         <button
           onClick={pop}
-          disabled={!stack.length}
+          disabled={!stack.length || stack[0]?.state === "prePush"}
           className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50"
         >
           Pop
