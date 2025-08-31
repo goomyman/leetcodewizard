@@ -1,10 +1,7 @@
-.stack-container {
-  /* Optional gradient or border tweaks */
-  background: linear-gradient(to top, #fefefe, #eee);
-  border-radius: 8px;
-}
+/* Optional: tweak spacing or animation styles */
 
-.stack-item {
-  /* Optional shadow or hover effect */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.stack-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }

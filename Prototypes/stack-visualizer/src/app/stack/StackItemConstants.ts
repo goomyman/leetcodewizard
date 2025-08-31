@@ -1,8 +1,12 @@
-export const STACK_ITEM_HEIGHT = 20;
+export const STACK_ITEM_HEIGHT = 20; // px
+
+export type StackState = "prePush" | "push" | "prePop" | "pop" | "normal";
 
 export interface StackItemType {
-  i: number;
-  start: number;
+  id: number;
+  path: string;
   color: string;
-  state?: "halfPush" | "fullPush" | "halfPop";
+  state: StackState;
+  i?: number;
+  start?: number;
 }

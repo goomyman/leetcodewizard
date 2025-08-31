@@ -1,6 +1,6 @@
 "use client";
 
-import StackControl from "./stack/StackControl";
+import StackControl from "./stack/Stack";
 
 export default function Page() {
   return (
