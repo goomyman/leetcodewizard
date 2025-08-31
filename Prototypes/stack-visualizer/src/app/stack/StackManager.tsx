@@ -9,26 +9,43 @@ import { StackItemType, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 
 let idCounter = 0;
 
+// Allowed StackItem states
+const allowedStates: StackItemType["state"][] = [
+  "start",
+  "push",
+  "prePush",
+  "prePop",
+  "popping",
+];
+
+// Ensure an item has a valid state
+const sanitizeStackItem = (item: StackItemType): StackItemType => ({
+  ...item,
+  state: allowedStates.includes(item.state) ? item.state : "start",
+});
+
 export default function StackManager() {
   const [stack, setStack] = React.useState<StackItemType[]>([]);
   const [prePushItem, setPrePushItem] = React.useState<StackItemType | null>(null);
   const history = useHistory<StackItemType[]>(stack);
 
-  const getRandomColor = () =>
-    `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
+  const getRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
 
-  // Stop all prePop except top
-  const normalizePrePop = (arr: StackItemType[]) =>
-    arr.map((item, index) =>
-      item.state === "prePop" && index !== 0
-        ? { ...item, state: "push" }
-        : item
-    );
+  // Only top item can be prePop
+  const normalizePrePop = (arr: StackItemType[]): StackItemType[] =>
+    arr
+      .map((item, index) =>
+        item.state === "prePop" && index !== 0
+          ? { ...item, state: "push" } as StackItemType
+          : item
+      )
+      .map(item => sanitizeStackItem(item) as StackItemType);
 
-  const stopAllPrePop = (prev: StackItemType[]) =>
-    prev.map(it =>
-      it.state === "prePop" ? { ...it, state: "push" } : it
-    );
+  // Stop all prePop before pushing a new item
+  const stopAllPrePop = (arr: StackItemType[]): StackItemType[] =>
+    arr
+      .map(it => (it.state === "prePop" ? { ...it, state: "push" } as StackItemType : it))
+      .map(item => sanitizeStackItem(item) as StackItemType);
 
   const prePush = () => {
     if (prePushItem || stack[0]?.state === "prePop") return;
@@ -42,12 +59,16 @@ export default function StackManager() {
     };
 
     setPrePushItem(newItem);
-    history.push([...stack, newItem]); // optional history entry
+    history.push([...stack, newItem]);
   };
 
   const push = () => {
     if (prePushItem) {
-      const newStack = [{ ...prePushItem, state: "push" }, ...stack];
+      const newStack = [
+        { ...prePushItem, state: "push" } as StackItemType, // Cast after spreading
+        ...stack
+      ]
+
       setStack(newStack);
       setPrePushItem(null);
       history.push(newStack);
@@ -68,8 +89,8 @@ export default function StackManager() {
   const prePop = () => {
     if (!stack.length || stack[0].state !== "push") return;
     const next = [...stack];
-    next[0] = { ...next[0], state: "prePop" };
-    setStack(next);
+    next[0] = { ...next[0], state: "prePop" } as StackItemType;
+    setStack(next.map(item => sanitizeStackItem(item) as StackItemType));
     history.push(next);
   };
 
@@ -77,15 +98,15 @@ export default function StackManager() {
     if (!stack.length || stack[0].state === "prePush") return;
     const next = [...stack];
     next.shift();
-    setStack(next);
+    setStack(next.map(item => sanitizeStackItem(item) as StackItemType));
     history.push(next);
   };
 
-  // Back / Forward restores stack immediately and normalizes prePop
   const back = () => {
     if (!history.canGoBack) return;
     const prevIndex = history.index - 1;
     if (prevIndex < 0) return;
+
     const restored = normalizePrePop([...history.history[prevIndex]]);
     history.setIndex(prevIndex);
     setStack(restored);
@@ -95,6 +116,7 @@ export default function StackManager() {
     if (!history.canGoForward) return;
     const nextIndex = history.index + 1;
     if (nextIndex >= history.history.length) return;
+
     const restored = normalizePrePop([...history.history[nextIndex]]);
     history.setIndex(nextIndex);
     setStack(restored);
@@ -102,7 +124,6 @@ export default function StackManager() {
 
   const topState = stack[0]?.state;
 
-  // Button enable/disable logic
   let disabledPrePush = !!prePushItem || topState === "prePop";
   let disabledPush = false;
   let disabledPrePop = topState !== "push";
@@ -110,7 +131,6 @@ export default function StackManager() {
   let canGoBack = history.canGoBack;
   let canGoForward = history.canGoForward;
 
-  // Strict prePush mode: only push/back enabled
   if (prePushItem) {
     disabledPrePush = true;
     disabledPrePop = true;
@@ -137,18 +157,24 @@ export default function StackManager() {
 
       <Stack stack={stack} />
 
-      {/* Floating PrePush item just above stack */}
       {prePushItem && (
         <div
           style={{
             position: "absolute",
-            top: -(STACK_ITEM_HEIGHT + 4), // 4px above top stack item
-            left: 0,
-            width: "100%",
+            top: stack.length * STACK_ITEM_HEIGHT - 5,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "288px",
             height: STACK_ITEM_HEIGHT,
+            pointerEvents: "none",
+            zIndex: 10,
           }}
         >
-          <StackItem item={prePushItem} stopShaking={false} isFloatingPrePush />
+          <StackItem
+            item={prePushItem}
+            stopShaking={false}
+            isFloatingPrePush
+          />
         </div>
       )}
     </div>

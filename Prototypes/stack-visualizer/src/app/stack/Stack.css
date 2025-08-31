@@ -1,7 +1,6 @@
-/* Optional: tweak spacing or animation styles */
-
 .stack-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative; /* necessary for floating PrePush */
 }
