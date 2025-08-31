@@ -62,7 +62,7 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
         {stackIndex}
       </div>
       <div className="w-full text-center">
-        i = {item.i} | start = {item.start} | &nbsp;&nbsp;<em> result = </em>
+         {item.text}
       </div>
     </motion.div>
   );

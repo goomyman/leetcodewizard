@@ -8,7 +8,7 @@ import { useHistory } from "./useHistory";
 import { StackItemType } from "./StackItemConstants";
 
 let idCounter = 0;
-const allowedStates: StackItemType["state"][] = ["start", "push", "prePush", "prePop", "popping"];
+const allowedStates: StackItemType["state"][] = ["start", "push", "prePush", "prePop"];
 const isValidStackItem = (item: any): item is StackItemType =>
   item && typeof item.id === "number" && typeof item.i === "number" && typeof item.start === "number" && typeof item.color === "string" && allowedStates.includes(item.state);
 
@@ -21,13 +21,10 @@ export default function StackManager() {
     arr.map((item, index) => item.state === "prePop" && index !== 0 ? { ...item, state: "push" as StackItemType["state"] } : item)
        .filter(isValidStackItem);
 
-  const stopAllPrePop = (arr: StackItemType[]): StackItemType[] =>
-    arr.map(it => it.state === "prePop" ? { ...it, state: "push" as StackItemType["state"] } : it).filter(isValidStackItem);
-
   const prePush = () => {
     const stack = history.current;
     if (stack[0]?.state === "prePop") return;
-    const newItem: StackItemType = { id: idCounter++, i: stack.length, start: stack.length, color: getRandomColor(), state: "prePush" as StackItemType["state"] };
+    const newItem: StackItemType = { id: idCounter++, text: "abc", color: getRandomColor(), state: "prePush" as StackItemType["state"] };
     history.push([newItem, ...stack]);
   };
 
@@ -37,7 +34,7 @@ export default function StackManager() {
     if (stack[0]?.state === "prePush" || stack[0]?.state === "prePop") {
       newStack = [{ ...stack[0], state: "push" as StackItemType["state"] }, ...stack.slice(1)];
     } else {
-      const newItem: StackItemType = { id: idCounter++, i: stack.length, start: stack.length, color: getRandomColor(), state: "push" as StackItemType["state"] };
+      const newItem: StackItemType = { id: idCounter++, text: "abc", color: getRandomColor(), state: "push" as StackItemType["state"] };
       newStack = [newItem, ...stack];
     }
     history.push(newStack);
