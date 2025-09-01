@@ -33,7 +33,7 @@ export default function StackManager() {
   const disabledPreInsert = hasStagedPreRemoves;
   const disabledCompletePreInsert = !hasStagedPreInserts || !hasItems;
   const disabledInsert = hasStagedPreInserts || hasStagedPreRemoves;
-  const disabledPreRemove = !hasItems || hasStagedPreInserts || hasStagedPreRemoves;
+  const disabledPreRemove = !hasItems || hasStagedPreInserts;
   const disabledCompletePreRemove = !hasStagedPreRemoves || !hasItems;
   const disabledRemove = hasStagedPreInserts || hasStagedPreRemoves || !hasItems;
 
