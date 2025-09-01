@@ -1,31 +1,31 @@
 "use client";
 
 interface StackControlProps {
-  onPrePush: () => void;
-  onPush: () => void;
-  onPrePop: () => void;
-  onPop: () => void;
+  onPreInsert: () => void;
+  onInsert: () => void;
+  onPreRemove: () => void;
+  onRemove: () => void;
   onBack: () => void;
   onForward: () => void;
-  disabledPrePush: boolean;
-  disabledPush: boolean;
-  disabledPrePop: boolean;
-  disabledPop: boolean;
+  disabledPreInsert: boolean;
+  disabledInsert: boolean;
+  disabledPreRemove: boolean;
+  disabledRemove: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
 }
 
 export default function StackControl({
-  onPrePush,
-  onPush,
-  onPrePop,
-  onPop,
+  onPreInsert: onPreInsert,
+  onInsert: onInsert,
+  onPreRemove: onPreRemove,
+  onRemove: onRemove,
   onBack,
   onForward,
-  disabledPrePush,
-  disabledPush,
-  disabledPrePop,
-  disabledPop,
+  disabledPreInsert: disabledPreInsert,
+  disabledInsert: disabledInsert,
+  disabledPreRemove: disabledPreRemove,
+  disabledRemove: disabledRemove,
   canGoBack,
   canGoForward,
 }: StackControlProps) {
@@ -46,32 +46,32 @@ export default function StackControl({
         Forward
       </button>
       <button
-        onClick={onPrePush}
-        disabled={disabledPrePush}
+        onClick={onPreInsert}
+        disabled={disabledPreInsert}
         className="px-3 py-1 bg-blue-300 text-white rounded disabled:opacity-50"
       >
-        PrePush
+        PreInsert
       </button>
       <button
-        onClick={onPush}
-        disabled={disabledPush}
+        onClick={onInsert}
+        disabled={disabledInsert}
         className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
       >
-        Push
+        Insert
       </button>
       <button
-        onClick={onPrePop}
-        disabled={disabledPrePop}
+        onClick={onPreRemove}
+        disabled={disabledPreRemove}
         className="px-3 py-1 bg-red-300 text-white rounded disabled:opacity-50"
       >
-        PrePop
+        PreRemove
       </button>
       <button
-        onClick={onPop}
-        disabled={disabledPop}
+        onClick={onRemove}
+        disabled={disabledRemove}
         className="px-3 py-1 bg-red-500 text-white rounded disabled:opacity-50"
       >
-        Pop
+        Remove
       </button>
     </div>
   );

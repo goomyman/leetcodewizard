@@ -40,21 +40,16 @@ let idCounter = 0;
   };
 
   const insert = (index?: number) => {
-    if (topState === StackItemState.PreInsert || topState === StackItemState.PreRemove) {
-      const newStack = [{ ...topItem, state: StackItemState.Insert }, ...stack.slice(1)];
-      history.push(newStack);
-    } else {
-      insertItemAt(currentInput, index ?? 0, StackItemState.Insert);
-    }
+    insertItemAt(currentInput, index ?? 0, StackItemState.Insert);
   };
 
-  const preRemove = () => {
+  const preRemove = (index?: number) => {
     if (!stack.length || topState !== StackItemState.Insert) return;
     const next = [{ ...topItem, state: StackItemState.PreRemove }, ...stack.slice(1)];
     history.push(next);
   };
 
-  const remove = () => {
+  const remove = (index?: number)  => {
     if (!stack.length || topState === StackItemState.PreInsert) return;
     history.push(stack.slice(1));
   };
@@ -71,26 +66,26 @@ let idCounter = 0;
   };
 
   /** Button states */
-  const disabledPrePush = topState === StackItemState.PreInsert || topState === StackItemState.PreRemove;
-  const disabledPush = topState === StackItemState.PreRemove;
-  const disabledPrePop = topState !== StackItemState.Insert;
-  const disabledPop = !stack.length || topState === StackItemState.PreInsert;
+  const disabledPreInsert = topState === StackItemState.PreInsert || topState === StackItemState.PreRemove;
+  const disabledInsert = topState === StackItemState.PreRemove;
+  const disabledPreRemove = topState !== StackItemState.Insert;
+  const disabledRemove = !stack.length || topState === StackItemState.PreInsert;
   const canGoBack = history.canGoBack;
   const canGoForward = history.canGoForward;
 
   return (
     <div className="p-4 flex flex-col items-center gap-4 relative w-full max-w-md">
       <StackControl
-        onPrePush={preInsert}
-        onPush={insert}
-        onPrePop={preRemove}
-        onPop={remove}
+        onPreInsert={preInsert}
+        onInsert={insert}
+        onPreRemove={preRemove}
+        onRemove={remove}
         onBack={back}
         onForward={forward}
-        disabledPrePush={disabledPrePush}
-        disabledPush={disabledPush}
-        disabledPrePop={disabledPrePop}
-        disabledPop={disabledPop}
+        disabledPreInsert={disabledPreInsert}
+        disabledInsert={disabledInsert}
+        disabledPreRemove={disabledPreRemove}
+        disabledRemove={disabledRemove}
         canGoBack={canGoBack}
         canGoForward={canGoForward}
       />

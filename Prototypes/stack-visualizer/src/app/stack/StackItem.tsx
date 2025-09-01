@@ -11,16 +11,16 @@ interface StackItemProps {
 }
 
 export default function StackItem({ item, stopShaking, stackIndex }: StackItemProps) {
-  const isPrePush = item.state === StackItemState.PreInsert;
-  const isPrePop = item.state === StackItemState.PreRemove;
+  const isPreInsert = item.state === StackItemState.PreInsert;
+  const isPreRemove = item.state === StackItemState.PreRemove;
 
   const controls = useAnimation();
 
-  // PrePop / PrePush animation: gentle vertical bounce + pulse
+  // animation: gentle vertical bounce + pulse
   useEffect(() => {
-    const shouldAnimate = (isPrePop || isPrePush) && !stopShaking;
-    const baseY = isPrePush ? -(STACK_ITEM_HEIGHT) : 0;
-    const baseX = isPrePush ? -(STACK_ITEM_WIDTH * 0.30) : 0;
+    const shouldAnimate = (isPreRemove || isPreInsert) && !stopShaking;
+    const baseY = isPreInsert ? -(STACK_ITEM_HEIGHT * 0.1) : 0;
+    const baseX = isPreInsert ? -(STACK_ITEM_WIDTH * 0.30) : 0;
 
     if (shouldAnimate) {
       controls.start({
@@ -42,7 +42,7 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
         transition: { type: "spring", stiffness: 300, damping: 20 },
       });
     }
-  }, [isPrePop, isPrePush, stopShaking, controls]);
+  }, [isPreRemove, isPreInsert, stopShaking, controls]);
 
   return (
     <motion.div
@@ -54,8 +54,8 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        boxShadow: isPrePush ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
-        zIndex: isPrePush ? 10 : 1,
+        boxShadow: isPreInsert ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
+        zIndex: isPreInsert ? 10 : 1,
       }}
       layout // smooth transition from floating → normal stack
       animate={controls}
