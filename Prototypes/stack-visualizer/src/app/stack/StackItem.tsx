@@ -19,7 +19,7 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
   // PrePop / PrePush animation: gentle vertical bounce + pulse
   useEffect(() => {
     const shouldAnimate = (isPrePop || isPrePush) && !stopShaking;
-    const baseY = isPrePush ? 0 : 0;
+    const baseY = isPrePush ? -(STACK_ITEM_HEIGHT) : 0;
     const baseX = isPrePush ? -(STACK_ITEM_WIDTH * 0.30) : 0;
 
     if (shouldAnimate) {
