@@ -11,8 +11,8 @@ interface StackItemProps {
 }
 
 export default function StackItem({ item, stopShaking, stackIndex }: StackItemProps) {
-  const isPrePush = item.state === StackItemState.PrePush;
-  const isPrePop = item.state === StackItemState.PrePop;
+  const isPrePush = item.state === StackItemState.PreInsert;
+  const isPrePop = item.state === StackItemState.PreRemove;
 
   const controls = useAnimation();
 

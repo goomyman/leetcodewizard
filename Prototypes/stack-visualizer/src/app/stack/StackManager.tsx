@@ -21,7 +21,7 @@ let idCounter = 0;
   const insertItemAt = (
     input: StackItemInputDto,
     index: number,
-    state: StackItemState = StackItemState.Push
+    state: StackItemState = StackItemState.Insert
   ) => {
     const newItem = createStackItem(input, idCounter++, state);
     const newStack = [...stack.slice(0, index), newItem, ...stack.slice(index)];
@@ -34,31 +34,28 @@ let idCounter = 0;
     color: undefined
   });
 
-  const prePush = (index?: number) => {
-    if (topState === StackItemState.PrePop) return;
-    insertItemAt(currentInput, index ?? 0, StackItemState.PrePush);
+  const preInsert = (index?: number) => {
+    if (topState === StackItemState.PreRemove) return;
+    insertItemAt(currentInput, index ?? 0, StackItemState.PreInsert);
   };
 
-  /** Push at top */
-  const push = (index?: number) => {
-    if (topState === StackItemState.PrePush || topState === StackItemState.PrePop) {
-      const newStack = [{ ...topItem, state: StackItemState.Push }, ...stack.slice(1)];
+  const insert = (index?: number) => {
+    if (topState === StackItemState.PreInsert || topState === StackItemState.PreRemove) {
+      const newStack = [{ ...topItem, state: StackItemState.Insert }, ...stack.slice(1)];
       history.push(newStack);
     } else {
-      insertItemAt(currentInput, index ?? 0, StackItemState.Push);
+      insertItemAt(currentInput, index ?? 0, StackItemState.Insert);
     }
   };
 
-  /** PrePop top item */
-  const prePop = () => {
-    if (!stack.length || topState !== StackItemState.Push) return;
-    const next = [{ ...topItem, state: StackItemState.PrePop }, ...stack.slice(1)];
+  const preRemove = () => {
+    if (!stack.length || topState !== StackItemState.Insert) return;
+    const next = [{ ...topItem, state: StackItemState.PreRemove }, ...stack.slice(1)];
     history.push(next);
   };
 
-  /** Pop top item */
-  const pop = () => {
-    if (!stack.length || topState === StackItemState.PrePush) return;
+  const remove = () => {
+    if (!stack.length || topState === StackItemState.PreInsert) return;
     history.push(stack.slice(1));
   };
 
@@ -74,20 +71,20 @@ let idCounter = 0;
   };
 
   /** Button states */
-  const disabledPrePush = topState === StackItemState.PrePush || topState === StackItemState.PrePop;
-  const disabledPush = topState === StackItemState.PrePop;
-  const disabledPrePop = topState !== StackItemState.Push;
-  const disabledPop = !stack.length || topState === StackItemState.PrePush;
+  const disabledPrePush = topState === StackItemState.PreInsert || topState === StackItemState.PreRemove;
+  const disabledPush = topState === StackItemState.PreRemove;
+  const disabledPrePop = topState !== StackItemState.Insert;
+  const disabledPop = !stack.length || topState === StackItemState.PreInsert;
   const canGoBack = history.canGoBack;
   const canGoForward = history.canGoForward;
 
   return (
     <div className="p-4 flex flex-col items-center gap-4 relative w-full max-w-md">
       <StackControl
-        onPrePush={prePush}
-        onPush={push}
-        onPrePop={prePop}
-        onPop={pop}
+        onPrePush={preInsert}
+        onPush={insert}
+        onPrePop={preRemove}
+        onPop={remove}
         onBack={back}
         onForward={forward}
         disabledPrePush={disabledPrePush}

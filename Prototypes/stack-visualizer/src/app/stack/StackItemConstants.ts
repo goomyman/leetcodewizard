@@ -6,10 +6,10 @@ export const getRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%
 // StackItemConstants.ts
 export enum StackItemState {
   Start = "Start",
-  PrePush = "PrePush",
-  Push = "Push",
-  PrePop = "PrePop",
-  Pop = "Pop",
+  PreInsert = "PreInsert",
+  Insert = "Insert",
+  PreRemove = "PreRemove",
+  Remove = "Remove",
 }
 
 export interface StackItemType {

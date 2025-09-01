@@ -13,7 +13,7 @@ export default function Stack({ stack }: StackProps) {
 
   return (
     <div
-      className="stack-container flex flex-col justify-end items-center border border-transparent relative"
+      className="stack-container flex flex-col justify-end items-center border-transparent relative"
       style={{ width: STACK_ITEM_WIDTH, minHeight: STACK_ITEM_HEIGHT * 20 }}
     >
       <AnimatePresence>
@@ -21,14 +21,14 @@ export default function Stack({ stack }: StackProps) {
           <motion.div
             key={item.id}
             layout // ensures smooth movement when items reorder
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -STACK_ITEM_HEIGHT * .50 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+            exit={{ opacity: 0, y: STACK_ITEM_HEIGHT * .50 }}
             transition={{ duration: 0.3 }}
           >
             <StackItem
               item={item}
-              stopShaking={item.state !== StackItemState.PrePop && item.state !== StackItemState.PrePush}
+              stopShaking={item.state !== StackItemState.PreRemove && item.state !== StackItemState.PreInsert}
               stackIndex={stack.length - index}
             />
           </motion.div>
