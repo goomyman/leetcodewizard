@@ -19,7 +19,7 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
   // animation: gentle vertical bounce + pulse
   useEffect(() => {
     const shouldAnimate = (isPreRemove || isPreInsert) && !stopShaking;
-    const baseY = isPreInsert ? -(STACK_ITEM_HEIGHT * 0.1) : 0;
+    const baseY = isPreInsert ? -(STACK_ITEM_HEIGHT * 0.05) : 0;
     const baseX = isPreInsert ? -(STACK_ITEM_WIDTH * 0.30) : 0;
 
     if (shouldAnimate) {

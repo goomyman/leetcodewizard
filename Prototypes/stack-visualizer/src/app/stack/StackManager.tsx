@@ -10,48 +10,50 @@ import { createStackItem } from "./StackItemUtil";
 
 let idCounter = 0;
 
-  export default function StackManager() {
-
+export default function StackManager() {
   const history = useHistory<StackItemType[]>([]);
   const stack = history.current;
   const topItem = stack[0];
   const topState = topItem?.state;
 
-  /** Insert at arbitrary index */
-  const insertItemAt = (
-    input: StackItemInputDto,
-    index: number,
-    state: StackItemState = StackItemState.Insert
-  ) => {
-    const newItem = createStackItem(input, idCounter++, state);
+  const [currentInput, setCurrentInput] = useState<StackItemInputDto>({
+    text: "",
+    level: null,
+    color: undefined,
+  });
+
+  const insertItemAt = (input: StackItemInputDto, index: number, state: StackItemState = StackItemState.Insert, text?: string) => {
+    if (index < 0 || index > stack.length) throw new Error(`Invalid insert index: ${index}`);
+    const newItem = createStackItem({ ...input, text: text ?? input.text }, idCounter++, state);
     const newStack = [...stack.slice(0, index), newItem, ...stack.slice(index)];
     history.push(newStack);
   };
 
-  const [currentInput, setCurrentInput] = useState<StackItemInputDto>({
-    text: "abcd",
-    level: null,
-    color: undefined
-  });
-
-  const preInsert = (index?: number) => {
+  const preInsert = (index?: number, text?: string) => {
     if (topState === StackItemState.PreRemove) return;
-    insertItemAt(currentInput, index ?? 0, StackItemState.PreInsert);
+    insertItemAt(currentInput, index ?? 0, StackItemState.PreInsert, text);
   };
 
-  const insert = (index?: number) => {
-    insertItemAt(currentInput, index ?? 0, StackItemState.Insert);
+  const insert = (index?: number, text?: string) => {
+    insertItemAt(currentInput, index ?? 0, StackItemState.Insert, text);
   };
 
-  const preRemove = (index?: number) => {
+  const preRemove = (index: number) => {
     if (!stack.length || topState !== StackItemState.Insert) return;
-    const next = [{ ...topItem, state: StackItemState.PreRemove }, ...stack.slice(1)];
-    history.push(next);
+    if (index < 0 || index >= stack.length) throw new Error(`Invalid pre-remove index: ${index}`);
+
+    const newStack = stack.map((item, idx) =>
+      idx === index ? { ...item, state: StackItemState.PreRemove } : item
+    );
+    history.push(newStack);
   };
 
-  const remove = (index?: number)  => {
-    if (!stack.length || topState === StackItemState.PreInsert) return;
-    history.push(stack.slice(1));
+  const remove = (index: number) => {
+    if (!stack.length) return;
+    if (index < 0 || index >= stack.length) throw new Error(`Invalid remove index: ${index}`);
+
+    const newStack = [...stack.slice(0, index), ...stack.slice(index + 1)];
+    history.push(newStack);
   };
 
   /** History navigation */
