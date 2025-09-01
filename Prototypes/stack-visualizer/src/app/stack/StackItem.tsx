@@ -62,10 +62,10 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
       className="text-sm font-bold text-black"
     >
       <div className="w-full text-left font-bold text-lg pl-3 flex-1">
-        {stackIndex}
+        {item.level}
       </div>
       <div className="w-full text-center">
-         {item.level}
+         {item.text}
       </div>
     </motion.div>
   );
