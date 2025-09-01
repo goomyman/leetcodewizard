@@ -2,7 +2,7 @@
 
 import { motion, useAnimation } from "framer-motion";
 import { useEffect } from "react";
-import { StackItemType, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { StackItemType, StackItemState, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 
 interface StackItemProps {
   item: StackItemType;
@@ -11,8 +11,8 @@ interface StackItemProps {
 }
 
 export default function StackItem({ item, stopShaking, stackIndex }: StackItemProps) {
-  const isPrePush = item.state === "prePush";
-  const isPrePop = item.state === "prePop";
+  const isPrePush = item.state === StackItemState.PrePush;
+  const isPrePop = item.state === StackItemState.PrePop;
 
   const controls = useAnimation();
 
