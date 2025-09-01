@@ -5,26 +5,18 @@ import Stack from "./Stack";
 import StackControl from "./StackControl";
 import SliderControl from "./SliderControl";
 import { useHistory } from "./useHistory";
-import { StackItemType } from "./StackItemConstants";
+import { StackItemType, getRandomColor } from "./StackItemConstants";
+import { createStackItem } from "./StackItemUtil";
 
 let idCounter = 0;
-const allowedStates: StackItemType["state"][] = ["start", "push", "prePush", "prePop"];
-const isValidStackItem = (item: any): item is StackItemType =>
-  item && typeof item.id === "number" && typeof item.i === "number" && typeof item.start === "number" && typeof item.color === "string" && allowedStates.includes(item.state);
 
 export default function StackManager() {
   const history = useHistory<StackItemType[]>([]);
 
-  const getRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
-
-  const normalizePrePop = (arr: StackItemType[]): StackItemType[] =>
-    arr.map((item, index) => item.state === "prePop" && index !== 0 ? { ...item, state: "push" as StackItemType["state"] } : item)
-       .filter(isValidStackItem);
-
   const prePush = () => {
     const stack = history.current;
     if (stack[0]?.state === "prePop") return;
-    const newItem: StackItemType = { id: idCounter++, text: "abc", color: getRandomColor(), state: "prePush" as StackItemType["state"] };
+    const newItem: StackItemType = { id: idCounter++, state: "prePush" as StackItemType["state"],  text: "abc", level: null, color: getRandomColor()};
     history.push([newItem, ...stack]);
   };
 
@@ -34,7 +26,7 @@ export default function StackManager() {
     if (stack[0]?.state === "prePush" || stack[0]?.state === "prePop") {
       newStack = [{ ...stack[0], state: "push" as StackItemType["state"] }, ...stack.slice(1)];
     } else {
-      const newItem: StackItemType = { id: idCounter++, text: "abc", color: getRandomColor(), state: "push" as StackItemType["state"] };
+      const newItem: StackItemType = { id: idCounter++, state: "push" as StackItemType["state"], text: "abc", level: null, color: getRandomColor()};
       newStack = [newItem, ...stack];
     }
     history.push(newStack);
@@ -57,7 +49,6 @@ export default function StackManager() {
     if (!history.canGoBack) return;
     const prevIndex = history.index - 1;
     if (prevIndex < 0) return;
-    normalizePrePop([...history.history[prevIndex]]);
     history.setIndex(prevIndex);
   };
 
@@ -65,7 +56,6 @@ export default function StackManager() {
     if (!history.canGoForward) return;
     const nextIndex = history.index + 1;
     if (nextIndex >= history.history.length) return;
-    normalizePrePop([...history.history[nextIndex]]);
     history.setIndex(nextIndex);
   };
 

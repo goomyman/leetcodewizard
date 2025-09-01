@@ -1,11 +1,20 @@
 export const STACK_ITEM_HEIGHT = 20;
 export const STACK_ITEM_WIDTH = 288;
 
+export const getRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
+
 export type StackItemState = "start" | "prePush" | "push" | "prePop" | "pop";
 
 export interface StackItemType {
   id: number;
-  text: string;
-  color: string;
   state: StackItemState;
+  color: string;
+  text?: string | null;
+  level?: number | null;
+}
+
+export interface StackItemInputDto {
+  text?: string;
+  level?: number
+  color?: string;
 }
