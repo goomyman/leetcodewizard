@@ -19,14 +19,16 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
   // PrePop / PrePush animation: gentle vertical bounce + pulse
   useEffect(() => {
     const shouldAnimate = (isPrePop || isPrePush) && !stopShaking;
-    const baseY = isPrePush ? -25 : 0;
+    const baseY = isPrePush ? 0 : 0;
+    const baseX = isPrePush ? -(STACK_ITEM_WIDTH * 0.30) : 0;
 
     if (shouldAnimate) {
       controls.start({
-        y: [baseY, baseY - 6, baseY, baseY - 6, baseY],
-        scale: [1, 1.05, 1, 1.05, 1],
+        y: [baseY, baseY - 3, baseY, baseY - 3, baseY],
+        x: [baseX, baseX, baseX, baseX, baseX],
+        scale: [1, 1.03, 1, 1.03, 1],
         transition: {
-          duration: 2,
+          duration: 2.5,
           repeat: Infinity,
           repeatType: "loop",
         },
@@ -35,6 +37,7 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
       controls.stop();
       controls.start({
         y: 0,
+        x: 0,
         scale: 1,
         transition: { type: "spring", stiffness: 300, damping: 20 },
       });
