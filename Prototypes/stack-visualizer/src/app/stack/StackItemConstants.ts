@@ -13,15 +13,15 @@ export enum StackItemState {
 }
 
 export interface StackItemType {
-  id: number
-  state: StackItemState
-  color: string
-  text: string
-  level?: number | null
+  id: number;
+  state: StackItemState;
+  color: string;
+  text: string;
+  level?: number | null;
 }
 
 export interface StackItemInputDto {
-  text: string
-  level?: number | null
-  color?: string
+  text: string;
+  level?: number | null;
+  color?: string;
 }

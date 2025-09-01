@@ -13,24 +13,13 @@ export default function StackManager() {
   const history = useHistory<StackItemType[]>([]);
   const stack = history.current;
 
-  const [currentInput, setCurrentInput] = useState<StackItemInputDto>({
-    text: "abcd",
-    level: null,
-    color: undefined,
-  });
-
-  const [stagedPreInserts, setStagedPreInserts] = useState<{ index: number; text: string }[]>([]);
+  const [stagedPreInserts, setStagedPreInserts] = useState<StackItemType[]>([]);
   const [stagedPreRemoves, setStagedPreRemoves] = useState<number[]>([]);
 
   /** Helper to create a StackItem */
-  const makeStackItem = (
-    input: StackItemInputDto,
-    state: StackItemState,
-    id: number,
-    text?: string
-  ): StackItemType => ({
-    id,
-    text: text ?? input.text,
+  const makeStackItem = (input: StackItemInputDto, state: StackItemState): StackItemType => ({
+    id: idCounter++,
+    text: input.text,
     level: input.level,
     color: input.color ?? getRandomColor(),
     state,
@@ -40,96 +29,132 @@ export default function StackManager() {
   const hasStagedPreInserts = stagedPreInserts.length > 0;
   const hasStagedPreRemoves = stagedPreRemoves.length > 0;
 
-  /** states */
+  /** Button states */
   const disabledPreInsert = hasStagedPreRemoves;
   const disabledCompletePreInsert = !hasStagedPreInserts || !hasItems;
-  const disabledInsert = stagedPreInserts.length > 0 || stagedPreRemoves.length > 0;
-  const disabledPreRemove = !hasItems || hasStagedPreInserts;
+  const disabledInsert = hasStagedPreInserts || hasStagedPreRemoves;
+  const disabledPreRemove = !hasItems || hasStagedPreInserts || hasStagedPreRemoves;
   const disabledCompletePreRemove = !hasStagedPreRemoves || !hasItems;
-  const disabledRemove = stagedPreInserts.length > 0 || stagedPreRemoves.length > 0 || !hasItems;
+  const disabledRemove = hasStagedPreInserts || hasStagedPreRemoves || !hasItems;
 
   const canGoBack = history.canGoBack;
   const canGoForward = history.canGoForward;
 
-  /** PreInsert: stage an insert with PreInsert state */
-  const preInsert = (index?: number, text?: string) => {
-    if (disabledPreInsert) return;
-    if (index === undefined || text == null) throw new Error("Index and text required");
+  /** PreInsert batch: stage items at given indices */
+  const preInsertBatch = (items: { index: number; input: StackItemInputDto }[]) => {
+    if (disabledPreInsert || items.length === 0) return;
 
-    const newItem = makeStackItem(currentInput, StackItemState.PreInsert, idCounter++, text);
-    const newStack = [...stack.slice(0, index), newItem, ...stack.slice(index)];
+    const newItems = items.map(({ index, input }) => {
+      const item = makeStackItem(input, StackItemState.PreInsert);
+      return { ...item, __index: index }; // temporary property to track intended index
+    });
+
+    // Insert items into stack at intended positions
+    let newStack = [...stack];
+    newItems
+      .sort((a, b) => b.__index - a.__index) // descending to not break indices
+      .forEach(item => {
+        const idx = Math.min(item.__index, newStack.length);
+        newStack.splice(idx, 0, item);
+        if ("__index" in item) {
+          // optional fix
+          delete (item as any).__index;
+        }
+      });
+
     history.push(newStack);
-
-    setStagedPreInserts([...stagedPreInserts, { index, text }]);
+    setStagedPreInserts([...stagedPreInserts, ...newItems]);
   };
 
   /** Complete staged PreInserts: commit by changing state → Insert */
   const completePreInsert = () => {
     if (disabledCompletePreInsert) return;
-    let newStack = stack.map(item =>
+
+    const newStack = stack.map(item =>
       item.state === StackItemState.PreInsert ? { ...item, state: StackItemState.Insert } : item
     );
+
     history.push(newStack);
     setStagedPreInserts([]);
   };
 
-  const insert = (index?: number, text?: string) => {
-    if (disabledInsert) return;
-    const idx = index ?? 0;
-    const newItem = makeStackItem(currentInput, StackItemState.Insert, idCounter++, text);
-    const newStack = [...stack.slice(0, idx), newItem, ...stack.slice(idx)];
-    history.push(newStack);
-  };
+  /** Direct Insert batch with indices */
+  const insertBatch = (items: { index: number; input: StackItemInputDto }[]) => {
+    if (disabledInsert || items.length === 0) return;
 
-  /** PreRemove: stage removal by setting state → PreRemove */
-  const preRemove = (index?: number) => {
-    if (disabledRemove) return;
-    if (index === undefined) throw new Error("Index required");
+    const newItems = items.map(({ input }) => makeStackItem(input, StackItemState.Insert));
 
-    if (!stagedPreRemoves.includes(index)) setStagedPreRemoves([...stagedPreRemoves, index]);
-
-    const newStack = stack.map((item, i) =>
-      i === index ? { ...item, state: StackItemState.PreRemove } : item
-    );
-    history.push(newStack);
-  };
-
-  /** Complete staged PreRemoves: remove items from stack */
-  const completePreRemove = () => {
-    if (disabledPreRemove) return;
-    const sortedIndices = [...stagedPreRemoves].sort((a, b) => b - a);
     let newStack = [...stack];
-    sortedIndices.forEach(idx => {
-      if (idx >= 0 && idx < newStack.length) newStack.splice(idx, 1);
-    });
+    items
+      .map((it, i) => ({ ...it, item: newItems[i] }))
+      .sort((a, b) => b.index - a.index)
+      .forEach(({ index, item }) => {
+        const idx = Math.min(index, newStack.length);
+        newStack.splice(idx, 0, item);
+      });
+
+    history.push(newStack);
+  };
+
+  /** PreRemove batch: stage removal of multiple indices */
+  const preRemoveBatch = (indices: number[]) => {
+    if (disabledPreRemove || indices.length === 0) return;
+
+    const uniqueIndices = Array.from(new Set(indices.filter(idx => idx >= 0 && idx < stack.length)));
+    const newStack = stack.map((item, i) =>
+      uniqueIndices.includes(i) ? { ...item, state: StackItemState.PreRemove } : item
+    );
+
+    history.push(newStack);
+    setStagedPreRemoves([...stagedPreRemoves, ...uniqueIndices]);
+  };
+
+  /** Complete staged PreRemoves */
+  const completePreRemove = () => {
+    if (disabledCompletePreRemove) return;
+
+    const sortedIndices = [...stagedPreRemoves].sort((a, b) => b - a);
+    const newStack = [...stack];
+    sortedIndices.forEach(idx => newStack.splice(idx, 1));
+
     history.push(newStack);
     setStagedPreRemoves([]);
   };
 
-  const remove = () => {
+  /** Direct remove: batch by indices or remove top */
+  const remove = (indices?: number[]) => {
     if (disabledRemove) return;
+
     if (stagedPreInserts.length > 0 || stagedPreRemoves.length > 0) return;
 
-    history.push(stack.slice(1));
+    let newStack = [...stack];
+
+    if (indices && indices.length > 0) {
+      [...indices].sort((a, b) => b - a).forEach(idx => {
+        if (idx >= 0 && idx < newStack.length) newStack.splice(idx, 1);
+      });
+    } else {
+      newStack.shift();
+    }
+
+    history.push(newStack);
   };
 
   /** History navigation */
   const back = () => {
-    if (!history.canGoBack) return;
-    history.setIndex(history.index - 1);
+    if (canGoBack) history.setIndex(history.index - 1);
   };
   const forward = () => {
-    if (!history.canGoForward) return;
-    history.setIndex(history.index + 1);
+    if (canGoForward) history.setIndex(history.index + 1);
   };
 
   return (
     <div className="p-4 flex flex-col items-center gap-4 relative w-full min-w-[900px]">
       <StackControl
-        onPreInsert={preInsert}
+        onPreInsert={preInsertBatch}
         onCompletePreInsert={completePreInsert}
-        onInsert={insert}
-        onPreRemove={preRemove}
+        onInsert={insertBatch}
+        onPreRemove={preRemoveBatch}
         onCompletePreRemove={completePreRemove}
         onRemove={remove}
         onBack={back}
