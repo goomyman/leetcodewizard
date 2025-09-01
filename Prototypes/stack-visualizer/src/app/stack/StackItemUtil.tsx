@@ -1,13 +1,15 @@
-import { StackItemType, StackItemInputDto } from "./StackItemConstants"; 
-import { getRandomColor, StackItemState, } from "./StackItemConstants"; 
+import { StackItemType, StackItemState, getRandomColor, StackItemInputDto } from "./StackItemConstants";
 
-export function createStackItem(input: StackItemInputDto, id: number): StackItemType {
+export function createStackItem(
+  input: StackItemInputDto,
+  id: number,
+  state: StackItemState = StackItemState.Start
+): StackItemType {
   return {
     id,
-    state: StackItemState.Start,
+    state,
     color: input.color ?? getRandomColor(),
     text: input.text,
-    level: input.level ?? undefined,
+    level: input.level,
   };
-
 }

@@ -1,16 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Stack from "./Stack";
 import StackControl from "./StackControl";
 import SliderControl from "./SliderControl";
 import { useHistory } from "./useHistory";
-import { StackItemType, StackItemState, getRandomColor } from "./StackItemConstants";
+import { StackItemType, StackItemState, getRandomColor, StackItemInputDto } from "./StackItemConstants";
 import { createStackItem } from "./StackItemUtil";
 
 let idCounter = 0;
 
 export default function StackManager() {
+
+  const [currentInput, setCurrentInput] = useState<StackItemInputDto>({
+    text: "abcd",
+    level: null,
+    color: undefined
+  });
+
   const history = useHistory<StackItemType[]>([]);
 
   const stack = history.current;
@@ -20,7 +27,7 @@ export default function StackManager() {
   const prePush = () => {
     const stack = history.current;
     if (topState === StackItemState.PrePop) return;
-    const newItem: StackItemType = { id: idCounter++, state: StackItemState.PrePush,  text: "abc", level: null, color: getRandomColor()};
+    const newItem = createStackItem(currentInput, idCounter++, StackItemState.PrePush);
     history.push([newItem, ...stack]);
   };
 
@@ -30,13 +37,14 @@ export default function StackManager() {
     if (topState === StackItemState.PrePush || topState === StackItemState.PrePop) {
       newStack = [{ ...topItem, state: StackItemState.Push }, ...stack.slice(1)];
     } else {
-      const newItem: StackItemType = { id: idCounter++, state: StackItemState.Push, text: "abc", level: null, color: getRandomColor()};
+      const newItem = createStackItem(currentInput, idCounter++, StackItemState.Push);
       newStack = [newItem, ...stack];
     }
     history.push(newStack);
   };
 
   const prePop = () => {
+
     if (!stack.length || topState !== StackItemState.Push) return;
     const next = [{ ...topItem, state: StackItemState.PrePop }, ...stack.slice(1)];
     history.push(next);

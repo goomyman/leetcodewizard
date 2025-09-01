@@ -16,12 +16,12 @@ export interface StackItemType {
   id: number;
   state: StackItemState;
   color: string;
-  text?: string | null;
+  text: string;
   level?: number | null;
 }
 
 export interface StackItemInputDto {
-  text?: string;
-  level?: number
+  text: string;
+  level?: number | null
   color?: string;
 }
