@@ -13,35 +13,38 @@ let idCounter = 0;
 export default function StackManager() {
   const history = useHistory<StackItemType[]>([]);
 
+  const stack = history.current;
+  const topItem = stack[0];
+  const topState = topItem?.state;
+
   const prePush = () => {
     const stack = history.current;
-    if (stack[0]?.state === StackItemState.PrePop) return;
-    const newItem: StackItemType = { id: idCounter++, state: StackItemState.PrePush as StackItemType["state"],  text: "abc", level: null, color: getRandomColor()};
+    if (topState === StackItemState.PrePop) return;
+    const newItem: StackItemType = { id: idCounter++, state: StackItemState.PrePush,  text: "abc", level: null, color: getRandomColor()};
     history.push([newItem, ...stack]);
   };
 
   const push = () => {
     const stack = history.current;
     let newStack: StackItemType[];
-    if (stack[0]?.state === StackItemState.PrePush || stack[0]?.state === StackItemState.PrePop) {
-      newStack = [{ ...stack[0], state: StackItemState.Push as StackItemType["state"] }, ...stack.slice(1)];
+    if (topState === StackItemState.PrePush || topState === StackItemState.PrePop) {
+      newStack = [{ ...topItem, state: StackItemState.Push }, ...stack.slice(1)];
     } else {
-      const newItem: StackItemType = { id: idCounter++, state: StackItemState.Push as StackItemType["state"], text: "abc", level: null, color: getRandomColor()};
+      const newItem: StackItemType = { id: idCounter++, state: StackItemState.Push, text: "abc", level: null, color: getRandomColor()};
       newStack = [newItem, ...stack];
     }
     history.push(newStack);
   };
 
   const prePop = () => {
-    const stack = history.current;
-    if (!stack.length || stack[0].state !== StackItemState.Push) return;
-    const next = [{ ...stack[0], state: StackItemState.PrePop as StackItemType["state"] }, ...stack.slice(1)];
+    if (!stack.length || topState !== StackItemState.Push) return;
+    const next = [{ ...topItem, state: StackItemState.PrePop }, ...stack.slice(1)];
     history.push(next);
   };
 
   const pop = () => {
     const stack = history.current;
-    if (!stack.length || stack[0].state === StackItemState.PrePush) return;
+    if (!stack.length || topState === StackItemState.PrePush) return;
     history.push(stack.slice(1));
   };
 
@@ -58,9 +61,6 @@ export default function StackManager() {
     if (nextIndex >= history.history.length) return;
     history.setIndex(nextIndex);
   };
-
-  const stack = history.current;
-  const topState = stack[0]?.state;
 
   const disabledPrePush = topState === StackItemState.PrePush || topState === StackItemState.PrePop;
   const disabledPush = topState === StackItemState.PrePop;
