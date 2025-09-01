@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+// Each item in the array is the entire State of the history,  even though it builds on itself this is useful to quickly restore to any state
 export function useHistory<T>(initial: T) {
   const [history, setHistory] = useState<T[]>([initial]);
   const [index, setIndex] = useState(0);

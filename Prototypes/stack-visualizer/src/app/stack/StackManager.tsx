@@ -10,7 +10,23 @@ import { createStackItem } from "./StackItemUtil";
 
 let idCounter = 0;
 
-export default function StackManager() {
+  export default function StackManager() {
+
+  const history = useHistory<StackItemType[]>([]);
+  const stack = history.current;
+  const topItem = stack[0];
+  const topState = topItem?.state;
+
+  /** Insert at arbitrary index */
+  const insertItemAt = (
+    input: StackItemInputDto,
+    index: number,
+    state: StackItemState = StackItemState.Push
+  ) => {
+    const newItem = createStackItem(input, idCounter++, state);
+    const newStack = [...stack.slice(0, index), newItem, ...stack.slice(index)];
+    history.push(newStack);
+  };
 
   const [currentInput, setCurrentInput] = useState<StackItemInputDto>({
     text: "abcd",
@@ -18,58 +34,46 @@ export default function StackManager() {
     color: undefined
   });
 
-  const history = useHistory<StackItemType[]>([]);
-
-  const stack = history.current;
-  const topItem = stack[0];
-  const topState = topItem?.state;
-
-  const prePush = () => {
-    const stack = history.current;
+  const prePush = (index?: number) => {
     if (topState === StackItemState.PrePop) return;
-    const newItem = createStackItem(currentInput, idCounter++, StackItemState.PrePush);
-    history.push([newItem, ...stack]);
+    insertItemAt(currentInput, index ?? 0, StackItemState.PrePush);
   };
 
-  const push = () => {
-    const stack = history.current;
-    let newStack: StackItemType[];
+  /** Push at top */
+  const push = (index?: number) => {
     if (topState === StackItemState.PrePush || topState === StackItemState.PrePop) {
-      newStack = [{ ...topItem, state: StackItemState.Push }, ...stack.slice(1)];
+      const newStack = [{ ...topItem, state: StackItemState.Push }, ...stack.slice(1)];
+      history.push(newStack);
     } else {
-      const newItem = createStackItem(currentInput, idCounter++, StackItemState.Push);
-      newStack = [newItem, ...stack];
+      insertItemAt(currentInput, index ?? 0, StackItemState.Push);
     }
-    history.push(newStack);
   };
 
+  /** PrePop top item */
   const prePop = () => {
-
     if (!stack.length || topState !== StackItemState.Push) return;
     const next = [{ ...topItem, state: StackItemState.PrePop }, ...stack.slice(1)];
     history.push(next);
   };
 
+  /** Pop top item */
   const pop = () => {
-    const stack = history.current;
     if (!stack.length || topState === StackItemState.PrePush) return;
     history.push(stack.slice(1));
   };
 
+  /** History navigation */
   const back = () => {
     if (!history.canGoBack) return;
-    const prevIndex = history.index - 1;
-    if (prevIndex < 0) return;
-    history.setIndex(prevIndex);
+    history.setIndex(history.index - 1);
   };
 
   const forward = () => {
     if (!history.canGoForward) return;
-    const nextIndex = history.index + 1;
-    if (nextIndex >= history.history.length) return;
-    history.setIndex(nextIndex);
+    history.setIndex(history.index + 1);
   };
 
+  /** Button states */
   const disabledPrePush = topState === StackItemState.PrePush || topState === StackItemState.PrePop;
   const disabledPush = topState === StackItemState.PrePop;
   const disabledPrePop = topState !== StackItemState.Push;
