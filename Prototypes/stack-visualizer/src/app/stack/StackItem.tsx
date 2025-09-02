@@ -44,12 +44,19 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
     }
   }, [isPreRemove, isPreInsert, stopShaking, controls]);
 
+  // determine background color based on state
+  const displayColor = isPreInsert
+    ? "green"
+    : isPreRemove
+    ? "red"
+    : item.color;
+
   return (
     <motion.div
       style={{
         width: STACK_ITEM_WIDTH,
         height: STACK_ITEM_HEIGHT,
-        backgroundColor: item.color,
+        backgroundColor: displayColor,
         borderRadius: 8,
         display: "flex",
         alignItems: "center",
@@ -65,7 +72,7 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
         {item.level}
       </div>
       <div className="w-full text-center">
-         {item.text}
+        {item.text}
       </div>
     </motion.div>
   );

@@ -32,26 +32,27 @@ export default function StackManager() {
   const handleUpload = (data: UploadData) => {
     let newStack = [...currentStack];
 
-    // Resolve previous pre-inserts
-    newStack = newStack.map(item =>
-      item.state === StackItemState.PreInsert ? { ...item, state: StackItemState.Inserted } : item
-    );
-    // Resolve previous pre-removes
+    // 1️⃣ Commit previous pre-deletes by ID
     if (stagedPreRemoves.length > 0) {
-      [...stagedPreRemoves]
-        .sort((a, b) => b - a)
-        .forEach(idx => {
-          if (idx >= 0 && idx < newStack.length) newStack.splice(idx, 1);
-        });
+      newStack = newStack.filter(item => !stagedPreRemoves.includes(item.id));
     }
 
-    // Apply new deletes as PreRemove
-    const deleteIndices: number[] = Array.from(new Set(data.deletes?.filter(i => i >= 0 && i < newStack.length) ?? []));
+    // 2️⃣ Commit previous pre-inserts
+    newStack = newStack.map(item =>
+      item.state === StackItemState.PreInsert
+        ? { ...item, state: StackItemState.Inserted }
+        : item
+    );
+
+    // 3️⃣ Apply new deletes as PreRemove
+    const deleteIndices: number[] = Array.from(
+      new Set(data.deletes?.filter(i => i >= 0 && i < newStack.length) ?? [])
+    );
     newStack = newStack.map((item, i) =>
       deleteIndices.includes(i) ? { ...item, state: StackItemState.PreRemove } : item
     );
 
-    // Apply new inserts as PreInsert
+    // 4️⃣ Apply new inserts as PreInsert
     const insertItems: StackItemType[] =
       data.inserts?.map(({ index, input }) => {
         const item = makeStackItem(input, StackItemState.PreInsert);
@@ -60,20 +61,29 @@ export default function StackManager() {
       }) ?? [];
 
     insertItems
-      .sort((a, b) => (b as any).__index - (a as any).__index)
+      .sort((a, b) => (a as any).__index - (b as any).__index)
       .forEach(item => {
         const idx = Math.min((item as any).__index, newStack.length);
         newStack.splice(idx, 0, item);
         delete (item as any).__index;
       });
 
-    // Update history and staged items
+    // 5️⃣ Update history
     const newHistory = history.slice(0, currentIndex + 1);
     setHistory([...newHistory, newStack]);
     setCurrentIndex(newHistory.length);
+
+    // 6️⃣ Stage new items for next upload
+
+    // Pre-inserts: the newly inserted items
     setStagedPreInserts(insertItems);
-    setStagedPreRemoves(deleteIndices);
+
+    // Pre-deletes: all items currently marked PreRemove AFTER inserts are applied
+    setStagedPreRemoves(
+      newStack.filter(item => item.state === StackItemState.PreRemove).map(item => item.id)
+    );
   };
+
 
   /** File upload handler */
   const handleFileUpload = async (file: File) => {
