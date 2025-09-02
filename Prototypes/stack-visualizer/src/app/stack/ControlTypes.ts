@@ -5,6 +5,12 @@ export enum StackItemState {
   PreRemove = "PreRemove",
 }
 
+export enum ControlTypes
+{
+    Stack = "stack",
+    Array = "array",
+}
+
 export interface StackItemType {
   id: number;
   text: string;
@@ -22,14 +28,14 @@ export interface ArrayUpdate {
 // Stack control
 export interface StackControl {
   id: string;
-  type: "stack";
+  type: ControlTypes.Stack;
   items: StackItemType[];
 }
 
 // Array control
 export interface ArrayControl {
   id: string;
-  type: "array";
+  type: ControlTypes.Array;
   size: number;
   updates: ArrayUpdate[];
 }
