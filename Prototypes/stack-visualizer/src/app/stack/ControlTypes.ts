@@ -6,6 +6,12 @@ export enum ControlItemState {
   PreUpdate = "PreUpdate"
 }
 
+export interface HistoryItem<T> {
+  items: T[];              
+  timestamp?: number;  
+  batchId?: string; 
+}
+
 export enum ControlTypes
 {
     Stack = "stack",
