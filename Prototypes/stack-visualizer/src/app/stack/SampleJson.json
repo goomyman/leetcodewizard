@@ -1,0 +1,21 @@
+{
+  "controls": [
+    {
+      "id": "stack1",
+      "type": "stack",
+      "inserts": [
+        { "index": 0, "input": { "text": "A" } },
+        { "index": 1, "input": { "text": "B" } }
+      ],
+      "deletes": [2]
+    },
+    {
+      "id": "array1",
+      "type": "array",
+      "updates": [
+        { "index": 0, "value": "X" },
+        { "index": 3, "value": "Y" }
+      ]
+    }
+  ]
+}

@@ -2,16 +2,22 @@
 
 import React, { useState } from "react";
 import Stack from "./Stack";
-import { StackItemType, StackItemInputDto, getRandomColor, StackItemState } from "./StackItemConstants";
+import { StackItemType, StackItemState, StackControl } from "./ControlTypes";
+import { StackItemInputDto, getRandomColor } from "./StackItemConstants";
 
 interface UploadData {
   inserts?: { index: number; input: StackItemInputDto }[];
   deletes?: number[];
 }
 
-export default function StackManager() {
-  const [history, setHistory] = useState<StackItemType[][]>([[]]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+interface StackRendererProps {
+  control: StackControl;
+  sliderValue: number;
+}
+
+export default function StackRenderer({ control, sliderValue }: StackRendererProps) {
+  const [history, setHistory] = useState<StackItemType[][]>([control.items || []]);
+  const [currentIndex, setCurrentIndex] = useState(sliderValue);
   const [stagedPreInserts, setStagedPreInserts] = useState<StackItemType[]>([]);
   const [stagedPreRemoves, setStagedPreRemoves] = useState<number[]>([]);
   const [jsonInput, setJsonInput] = useState("");
