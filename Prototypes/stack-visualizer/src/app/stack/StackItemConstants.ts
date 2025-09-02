@@ -7,9 +7,8 @@ export const getRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%
 export enum StackItemState {
   Start = "Start",
   PreInsert = "PreInsert",
-  Insert = "Insert",
+  Inserted = "Inserted",
   PreRemove = "PreRemove",
-  Remove = "Remove",
 }
 
 export interface StackItemType {

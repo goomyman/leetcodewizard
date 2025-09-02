@@ -2,180 +2,165 @@
 
 import React, { useState } from "react";
 import Stack from "./Stack";
-import StackControl from "./StackControl";
-import SliderControl from "./SliderControl";
-import { useHistory } from "./useHistory";
-import { StackItemType, StackItemState, StackItemInputDto, getRandomColor } from "./StackItemConstants";
+import { StackItemType, StackItemInputDto, getRandomColor, StackItemState } from "./StackItemConstants";
 
-let idCounter = 0;
+interface UploadData {
+  inserts?: { index: number; input: StackItemInputDto }[];
+  deletes?: number[];
+}
 
 export default function StackManager() {
-  const history = useHistory<StackItemType[]>([]);
-  const stack = history.current;
-
+  const [history, setHistory] = useState<StackItemType[][]>([[]]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [stagedPreInserts, setStagedPreInserts] = useState<StackItemType[]>([]);
   const [stagedPreRemoves, setStagedPreRemoves] = useState<number[]>([]);
+  const [jsonInput, setJsonInput] = useState("");
+
+  const currentStack = history[currentIndex];
 
   /** Helper to create a StackItem */
-  const makeStackItem = (input: StackItemInputDto, state: StackItemState): StackItemType => ({
-    id: idCounter++,
+  const makeStackItem = (input: StackItemInputDto, state: StackItemState) => ({
+    id: Date.now() + Math.random(),
     text: input.text,
-    level: input.level,
+    level: input.level ?? null,
     color: input.color ?? getRandomColor(),
     state,
+    __index: undefined as number | undefined,
   });
 
-  const hasItems = stack.length > 0;
-  const hasStagedPreInserts = stagedPreInserts.length > 0;
-  const hasStagedPreRemoves = stagedPreRemoves.length > 0;
+  /** Apply Upload JSON */
+  const handleUpload = (data: UploadData) => {
+    let newStack = [...currentStack];
 
-  /** Button states */
-  const disabledPreInsert = hasStagedPreRemoves;
-  const disabledCompletePreInsert = !hasStagedPreInserts || !hasItems;
-  const disabledInsert = hasStagedPreInserts || hasStagedPreRemoves;
-  const disabledPreRemove = !hasItems || hasStagedPreInserts;
-  const disabledCompletePreRemove = !hasStagedPreRemoves || !hasItems;
-  const disabledRemove = hasStagedPreInserts || hasStagedPreRemoves || !hasItems;
-
-  const canGoBack = history.canGoBack;
-  const canGoForward = history.canGoForward;
-
-  /** PreInsert batch: stage items at given indices */
-  const preInsertBatch = (items: { index: number; input: StackItemInputDto }[]) => {
-    if (disabledPreInsert || items.length === 0) return;
-
-    const newItems = items.map(({ index, input }) => {
-      const item = makeStackItem(input, StackItemState.PreInsert);
-      return { ...item, __index: index }; // temporary property to track intended index
-    });
-
-    // Insert items into stack at intended positions
-    let newStack = [...stack];
-    newItems
-      .sort((a, b) => b.__index - a.__index) // descending to not break indices
-      .forEach(item => {
-        const idx = Math.min(item.__index, newStack.length);
-        newStack.splice(idx, 0, item);
-        if ("__index" in item) {
-          // optional fix
-          delete (item as any).__index;
-        }
-      });
-
-    history.push(newStack);
-    setStagedPreInserts([...stagedPreInserts, ...newItems]);
-  };
-
-  /** Complete staged PreInserts: commit by changing state → Insert */
-  const completePreInsert = () => {
-    if (disabledCompletePreInsert) return;
-
-    const newStack = stack.map(item =>
-      item.state === StackItemState.PreInsert ? { ...item, state: StackItemState.Insert } : item
+    // Resolve previous pre-inserts
+    newStack = newStack.map(item =>
+      item.state === StackItemState.PreInsert ? { ...item, state: StackItemState.Inserted } : item
     );
-
-    history.push(newStack);
-    setStagedPreInserts([]);
-  };
-
-  /** Direct Insert batch with indices */
-  const insertBatch = (items: { index: number; input: StackItemInputDto }[]) => {
-    if (disabledInsert || items.length === 0) return;
-
-    const newItems = items.map(({ input }) => makeStackItem(input, StackItemState.Insert));
-
-    let newStack = [...stack];
-    items
-      .map((it, i) => ({ ...it, item: newItems[i] }))
-      .sort((a, b) => b.index - a.index)
-      .forEach(({ index, item }) => {
-        const idx = Math.min(index, newStack.length);
-        newStack.splice(idx, 0, item);
-      });
-
-    history.push(newStack);
-  };
-
-  /** PreRemove batch: stage removal of multiple indices */
-  const preRemoveBatch = (indices: number[]) => {
-    if (disabledPreRemove || indices.length === 0) return;
-
-    const uniqueIndices = Array.from(new Set(indices.filter(idx => idx >= 0 && idx < stack.length)));
-    const newStack = stack.map((item, i) =>
-      uniqueIndices.includes(i) ? { ...item, state: StackItemState.PreRemove } : item
-    );
-
-    history.push(newStack);
-    setStagedPreRemoves([...stagedPreRemoves, ...uniqueIndices]);
-  };
-
-  /** Complete staged PreRemoves */
-  const completePreRemove = () => {
-    if (disabledCompletePreRemove) return;
-
-    const sortedIndices = [...stagedPreRemoves].sort((a, b) => b - a);
-    const newStack = [...stack];
-    sortedIndices.forEach(idx => newStack.splice(idx, 1));
-
-    history.push(newStack);
-    setStagedPreRemoves([]);
-  };
-
-  /** Direct remove: batch by indices or remove top */
-  const remove = (indices?: number[]) => {
-    if (disabledRemove) return;
-
-    if (stagedPreInserts.length > 0 || stagedPreRemoves.length > 0) return;
-
-    let newStack = [...stack];
-
-    if (indices && indices.length > 0) {
-      [...indices].sort((a, b) => b - a).forEach(idx => {
-        if (idx >= 0 && idx < newStack.length) newStack.splice(idx, 1);
-      });
-    } else {
-      newStack.shift();
+    // Resolve previous pre-removes
+    if (stagedPreRemoves.length > 0) {
+      [...stagedPreRemoves]
+        .sort((a, b) => b - a)
+        .forEach(idx => {
+          if (idx >= 0 && idx < newStack.length) newStack.splice(idx, 1);
+        });
     }
 
-    history.push(newStack);
+    // Apply new deletes as PreRemove
+    const deleteIndices: number[] = Array.from(new Set(data.deletes?.filter(i => i >= 0 && i < newStack.length) ?? []));
+    newStack = newStack.map((item, i) =>
+      deleteIndices.includes(i) ? { ...item, state: StackItemState.PreRemove } : item
+    );
+
+    // Apply new inserts as PreInsert
+    const insertItems: StackItemType[] =
+      data.inserts?.map(({ index, input }) => {
+        const item = makeStackItem(input, StackItemState.PreInsert);
+        item.__index = index;
+        return item;
+      }) ?? [];
+
+  insertItems
+    .sort((a, b) => (b as any).__index - (a as any).__index)
+    .forEach(item => {
+      const idx = Math.min((item as any).__index, newStack.length);
+      newStack.splice(idx, 0, item);
+      delete (item as any).__index;
+    });
+    
+    // Update history and staged items
+    const newHistory = history.slice(0, currentIndex + 1);
+    setHistory([...newHistory, newStack]);
+    setCurrentIndex(newHistory.length);
+    setStagedPreInserts(insertItems);
+    setStagedPreRemoves(deleteIndices);
   };
 
-  /** History navigation */
-  const back = () => {
-    if (canGoBack) history.setIndex(history.index - 1);
+  /** File upload handler */
+  const handleFileUpload = async (file: File) => {
+    try {
+      const text = await file.text();
+      const parsed: UploadData = JSON.parse(text);
+      handleUpload(parsed);
+    } catch {
+      alert("Invalid JSON file");
+    }
   };
-  const forward = () => {
-    if (canGoForward) history.setIndex(history.index + 1);
-  };
+
+  /** Forward / Back / Slider */
+  const goBack = () => currentIndex > 0 && setCurrentIndex(currentIndex - 1);
+  const goForward = () => currentIndex < history.length - 1 && setCurrentIndex(currentIndex + 1);
+  const scrubHistory = (index: number) => setCurrentIndex(index);
 
   return (
-    <div className="p-4 flex flex-col items-center gap-4 relative w-full min-w-[900px]">
-      <StackControl
-        onPreInsert={preInsertBatch}
-        onCompletePreInsert={completePreInsert}
-        onInsert={insertBatch}
-        onPreRemove={preRemoveBatch}
-        onCompletePreRemove={completePreRemove}
-        onRemove={remove}
-        onBack={back}
-        onForward={forward}
-        disabledPreInsert={disabledPreInsert}
-        disabledCompletePreInsert={disabledCompletePreInsert}
-        disabledInsert={disabledInsert}
-        disabledPreRemove={disabledPreRemove}
-        disabledCompletePreRemove={disabledCompletePreRemove}
-        disabledRemove={disabledRemove}
-        canGoBack={canGoBack}
-        canGoForward={canGoForward}
+    <div className="flex flex-col gap-4 w-full p-4 bg-gray-100 rounded-lg shadow">
+      <h2 className="text-lg font-bold">Stack Manager</h2>
+
+      {/* JSON input */}
+      <textarea
+        placeholder='Paste JSON here: { "inserts": [{ "index":0, "input":{"text":"A"}}], "deletes": [2,3] }'
+        className="w-full p-2 border rounded font-mono text-sm"
+        rows={5}
+        value={jsonInput}
+        onChange={e => setJsonInput(e.target.value)}
       />
 
-      <SliderControl
-        historyLength={history.history.length}
-        currentIndex={history.index}
-        onChange={history.setIndex}
+      {/* Upload button */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+            try {
+              const parsed: UploadData = JSON.parse(jsonInput);
+              handleUpload(parsed);
+            } catch {
+              alert("Invalid JSON input");
+            }
+          }}
+          className="px-3 py-1 bg-blue-500 text-white rounded"
+        >
+          Upload
+        </button>
+
+        <input
+          type="file"
+          accept="application/json"
+          onChange={e => e.target.files && handleFileUpload(e.target.files[0])}
+          className="px-3 py-1 bg-gray-300 rounded cursor-pointer"
+        />
+      </div>
+
+      {/* Navigation */}
+      <div className="flex gap-2">
+        <button
+          onClick={goBack}
+          disabled={currentIndex === 0}
+          className="px-3 py-1 bg-gray-500 text-white rounded disabled:opacity-50"
+        >
+          Back
+        </button>
+        <button
+          onClick={goForward}
+          disabled={currentIndex === history.length - 1}
+          className="px-3 py-1 bg-gray-500 text-white rounded disabled:opacity-50"
+        >
+          Forward
+        </button>
+      </div>
+
+      {/* Slider */}
+      <input
+        type="range"
+        min={0}
+        max={history.length - 1}
+        value={currentIndex}
+        onChange={e => scrubHistory(Number(e.target.value))}
+        className="w-full"
       />
 
-      <Stack stack={stack} />
+      {/* Stack display */}
+      <div className="p-2 bg-white border rounded">
+        <h3 className="font-semibold">Current Stack</h3>
+        <Stack stack={currentStack} />
+      </div>
     </div>
   );
 }
