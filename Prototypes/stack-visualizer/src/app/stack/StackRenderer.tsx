@@ -1,32 +1,20 @@
 "use client";
 
 import React from "react";
-import { StackItemType, StackControl } from "./ControlTypes";
 import StackItem from "./StackItem";
+import { HistoryControl } from "./ControlTypes";
 
 interface StackRendererProps {
-  control: StackControl;
+  control: HistoryControl;
   sliderValue: number;
-  stopShaking?: boolean;
 }
 
-export default function StackRenderer({
-  control,
-  sliderValue,
-  stopShaking = false,
-}: StackRendererProps) {
-  const currentStack: StackItemType[] = control.history?.[sliderValue] || [];
-
+export default function StackRenderer({ control }: StackRendererProps) {
   return (
-    <div className="flex flex-col gap-1 w-full max-w-2xl p-2 bg-gray-800 border rounded justify-center items-center min-h-[200px]">
+    <div className="p-2 bg-gray-800 border rounded flex flex-col items-center justify-center min-h-[200px] w-full max-w-2xl">
       <h3 className="font-semibold text-white mb-2">{control.id}</h3>
-      {currentStack.map((item, idx) => (
-        <StackItem
-          key={item.id}
-          item={item}
-          stopShaking={stopShaking}
-          stackIndex={idx}
-        />
+      {control.items.map((item, idx) => (
+        <StackItem key={item.id} item={item} stopShaking={item.state !== 1} stackIndex={idx} />
       ))}
     </div>
   );

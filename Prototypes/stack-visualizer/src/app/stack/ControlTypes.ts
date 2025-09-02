@@ -3,49 +3,59 @@ export enum ControlItemState {
   PreInsert = "PreInsert",
   Inserted = "Inserted",
   PreRemove = "PreRemove",
-  PreUpdate = "PreUpdate"
+  PreUpdate = "PreUpdate",
 }
 
-export interface HistoryItem<T> {
-  items: T[];              
-  timestamp?: number;  
-  batchId?: string; 
+export enum ControlTypes {
+  Stack = "stack",
+  Array = "array",
 }
 
-export enum ControlTypes
-{
-    Stack = "stack",
-    Array = "array",
+export interface HistoryItem {
+  id: string;
+  value?: any;
+  text?: string;
+  level?: number;
+  color?: string;
+  state: ControlItemState;
 }
 
+export interface Batch<T> {
+  inserts?: { index: number; input: Partial<T> }[];
+  deletes?: number[];
+  updates?: { index: number; input: Partial<T> }[];
+}
+
+// Generic control
+export interface Control<T> {
+  id: string;
+  type: ControlTypes;
+  items: T[];
+  batch?: Batch<T>;
+  color?: string;
+  size?: number;
+}
+
+// Stack-specific item
 export interface StackItemType {
   id: number;
   text: string;
   level?: number | null;
   color?: string;
-  state: ControlItemState
+  state: ControlItemState;
 }
 
-// Array update
-export interface ArrayUpdate {
-  index: number;
-  value: string;
+// Array-specific item
+export interface ArrayItemType {
+  id: number;
+  value: string | number | null;
+  color?: string;
+  state: ControlItemState;
 }
 
-// Stack control
-export interface StackControl {
-  id: string;
-  type: ControlTypes.Stack;
-  items: StackItemType[];
-}
+// StackControl & ArrayControl are just Control with proper item type
+export type StackControl = Control<StackItemType>;
+export type ArrayControl = Control<ArrayItemType>;
 
-// Array control
-export interface ArrayControl {
-  id: string;
-  type: ControlTypes.Array;
-  size: number;
-  updates: ArrayUpdate[];
-}
-
-// Union type for controls
-export type Control = StackControl | ArrayControl;
+// Union type
+export type AnyControl = StackControl | ArrayControl;
