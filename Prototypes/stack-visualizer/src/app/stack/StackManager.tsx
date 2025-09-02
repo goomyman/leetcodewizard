@@ -92,7 +92,7 @@ export default function StackManager() {
   const scrubHistory = (index: number) => setCurrentIndex(index);
 
   return (
-    <div className="flex flex-col gap-4 w-full p-4 bg-gray-100 rounded-lg shadow">
+    <div className="flex flex-col gap-4 w-full p-4 bg-gray-900 rounded-lg shadow">
       <h2 className="text-lg font-bold">Stack Manager</h2>
 
       {/* JSON input */}
@@ -157,8 +157,8 @@ export default function StackManager() {
       />
 
       {/* Stack display */}
-      <div className="p-2 bg-white border rounded">
-        <h3 className="font-semibold">Current Stack</h3>
+      <div className="p-2 bg-gray border rounded">
+        <h3 className="font-semibold ">Current Stack</h3>
         <Stack stack={currentStack} />
       </div>
     </div>
