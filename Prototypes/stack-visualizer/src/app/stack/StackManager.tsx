@@ -59,14 +59,14 @@ export default function StackManager() {
         return item;
       }) ?? [];
 
-  insertItems
-    .sort((a, b) => (b as any).__index - (a as any).__index)
-    .forEach(item => {
-      const idx = Math.min((item as any).__index, newStack.length);
-      newStack.splice(idx, 0, item);
-      delete (item as any).__index;
-    });
-    
+    insertItems
+      .sort((a, b) => (b as any).__index - (a as any).__index)
+      .forEach(item => {
+        const idx = Math.min((item as any).__index, newStack.length);
+        newStack.splice(idx, 0, item);
+        delete (item as any).__index;
+      });
+
     // Update history and staged items
     const newHistory = history.slice(0, currentIndex + 1);
     setHistory([...newHistory, newStack]);
@@ -92,19 +92,19 @@ export default function StackManager() {
   const scrubHistory = (index: number) => setCurrentIndex(index);
 
   return (
-    <div className="flex flex-col gap-4 w-full p-4 bg-gray-900 rounded-lg shadow">
+    <div className="flex flex-col items-center gap-4 w-full p-4 bg-gray-900 rounded-lg shadow">
       <h2 className="text-lg font-bold">Stack Manager</h2>
 
       {/* JSON input */}
       <textarea
         placeholder='Paste JSON here: { "inserts": [{ "index":0, "input":{"text":"A"}}], "deletes": [2,3] }'
-        className="w-full p-2 border rounded font-mono text-sm"
+        className="w-full max-w-2xl p-2 border rounded font-mono text-sm"
         rows={5}
         value={jsonInput}
         onChange={e => setJsonInput(e.target.value)}
       />
 
-      {/* Upload button */}
+      {/* Upload buttons */}
       <div className="flex gap-2">
         <button
           onClick={() => {
@@ -132,15 +132,15 @@ export default function StackManager() {
       <div className="flex gap-2">
         <button
           onClick={goBack}
-          disabled={currentIndex === 0}
           className="px-3 py-1 bg-gray-500 text-white rounded disabled:opacity-50"
+          disabled={currentIndex === 0}
         >
           Back
         </button>
         <button
           onClick={goForward}
-          disabled={currentIndex === history.length - 1}
           className="px-3 py-1 bg-gray-500 text-white rounded disabled:opacity-50"
+          disabled={currentIndex === history.length - 1}
         >
           Forward
         </button>
@@ -153,12 +153,13 @@ export default function StackManager() {
         max={history.length - 1}
         value={currentIndex}
         onChange={e => scrubHistory(Number(e.target.value))}
-        className="w-full"
+        className="w-full max-w-2xl"
       />
+      <p className="text-white">Step: {currentIndex}</p>
 
       {/* Stack display */}
-      <div className="p-2 bg-gray border rounded">
-        <h3 className="font-semibold ">Current Stack</h3>
+      <div className="p-2 bg-gray-800 border rounded flex flex-col items-center justify-center min-h-[200px]">
+        <h3 className="font-semibold text-white mb-2">Current Stack</h3>
         <Stack stack={currentStack} />
       </div>
     </div>
