@@ -3,7 +3,7 @@
 import { motion, useAnimation } from "framer-motion";
 import { useEffect } from "react";
 import { STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
-import { StackItemType, StackItemState } from "./ControlTypes";
+import { StackItemType, ControlItemState } from "./ControlTypes";
 
 interface StackItemProps {
   item: StackItemType;
@@ -12,8 +12,8 @@ interface StackItemProps {
 }
 
 export default function StackItem({ item, stopShaking, stackIndex }: StackItemProps) {
-  const isPreInsert = item.state === StackItemState.PreInsert;
-  const isPreRemove = item.state === StackItemState.PreRemove;
+  const isPreInsert = item.state === ControlItemState.PreInsert;
+  const isPreRemove = item.state === ControlItemState.PreRemove;
 
   const controls = useAnimation();
 

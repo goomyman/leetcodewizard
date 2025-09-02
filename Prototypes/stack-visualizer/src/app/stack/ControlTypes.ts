@@ -1,8 +1,9 @@
-export enum StackItemState {
+export enum ControlItemState {
   Start = "Start",
   PreInsert = "PreInsert",
   Inserted = "Inserted",
   PreRemove = "PreRemove",
+  PreUpdate = "PreUpdate"
 }
 
 export enum ControlTypes
@@ -16,7 +17,7 @@ export interface StackItemType {
   text: string;
   level?: number | null;
   color?: string;
-  state: StackItemState
+  state: ControlItemState
 }
 
 // Array update

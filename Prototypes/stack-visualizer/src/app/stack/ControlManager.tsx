@@ -3,22 +3,35 @@
 import React, { useState } from "react";
 import StackRenderer from "./StackRenderer";
 import ArrayRenderer from "./ArrayRenderer";
-import { Control, StackControl, ArrayControl } from "./ControlTypes";
-import { initialControls } from "./InitialData";
+import { StackControl, ArrayControl, HistoryItem } from "./ControlTypes";
+import { BatchProcessor, UploadBatch } from "./BatchProcessor";
 
 interface ControlManagerProps {
-  initialData?: { controls: Control[] };
+  initialData?: { controls: (StackControl | ArrayControl)[] };
 }
 
 export default function ControlManager({ initialData }: ControlManagerProps) {
-  const [controls, setControls] = useState<Control[]>(initialData?.controls || []);
+  const [controls, setControls] = useState<(StackControl | ArrayControl)[]>(
+    initialData?.controls || []
+  );
+
   const [sliderValue, setSliderValue] = useState(0);
   const [jsonInput, setJsonInput] = useState("");
 
+  // Create a BatchProcessor per control
+  const batchProcessors = React.useRef(
+    controls.map(c => new BatchProcessor<HistoryItem>([c.items || []]))
+  );
+
   /** Upload JSON from textarea or file */
-  const handleUpload = (data: { controls: Control[] }) => {
+  const handleUpload = (data: { controls: (StackControl | ArrayControl)[] }) => {
     setControls(data.controls);
     setSliderValue(0);
+
+    // Apply batch to each processor
+    data.controls.forEach((control, idx) => {
+      batchProcessors.current[idx].applyBatch(control.batch ?? {});
+    });
   };
 
   /** File upload */
@@ -32,13 +45,9 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
     }
   };
 
-  /** Max steps for slider */
+  /** Max slider value is the max history length across all controls */
   const maxSteps = Math.max(
-    ...controls.map(c => {
-      if (c.type === "stack") return (c as StackControl).items.length;
-      if (c.type === "array") return (c as ArrayControl).updates?.length ?? 1;
-      return 1;
-    }),
+    ...batchProcessors.current.map(bp => bp.getHistory().length),
     1
   );
 
@@ -91,25 +100,30 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
 
       {/* Render controls */}
       <div className="flex flex-col gap-6 w-full items-center">
-        {controls.map(control => {
+        {controls.map((control, idx) => {
+          const history = batchProcessors.current[idx].getHistory();
+          const currentStep = history[Math.min(sliderValue, history.length - 1)];
+
           if (control.type === "stack") {
             return (
               <StackRenderer
                 key={control.id}
-                control={control as StackControl}
+                control={{ ...control, items: currentStep }}
                 sliderValue={sliderValue}
               />
             );
           }
+
           if (control.type === "array") {
             return (
               <ArrayRenderer
                 key={control.id}
-                control={control as ArrayControl}
+                control={{ ...control, items: currentStep }}
                 sliderValue={sliderValue}
               />
             );
           }
+
           return null;
         })}
       </div>
