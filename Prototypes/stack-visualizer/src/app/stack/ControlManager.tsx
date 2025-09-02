@@ -1,26 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import StackRenderer from "./StackRenderer";
 import ArrayRenderer from "./ArrayRenderer";
-import { StackControl, ArrayControl } from "./ControlTypes";
+import { Control, StackControl, ArrayControl } from "./ControlTypes";
+import { initialControls } from "./InitialData";
 
 interface ControlManagerProps {
-  initialData: { controls: (StackControl | ArrayControl)[] };
+  initialData?: { controls: Control[] };
 }
 
 export default function ControlManager({ initialData }: ControlManagerProps) {
-  const [controls, setControls] = useState<(StackControl | ArrayControl)[]>(initialData.controls);
+  const [controls, setControls] = useState<Control[]>(initialData?.controls || []);
   const [sliderValue, setSliderValue] = useState(0);
   const [jsonInput, setJsonInput] = useState("");
 
   /** Upload JSON from textarea or file */
-  const handleUpload = (data: { controls: (StackControl | ArrayControl)[] }) => {
+  const handleUpload = (data: { controls: Control[] }) => {
     setControls(data.controls);
-    setSliderValue(0); // reset slider
+    setSliderValue(0);
   };
 
-  /** File upload handler */
+  /** File upload */
   const handleFileUpload = async (file: File) => {
     try {
       const text = await file.text();
@@ -31,11 +32,11 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
     }
   };
 
-  /** Max steps for slider: largest number of updates/items among all controls */
+  /** Max steps for slider */
   const maxSteps = Math.max(
     ...controls.map(c => {
-      if (c.type === "stack") return c.items?.length ?? 1;
-      if (c.type === "array") return c.updates?.length ?? 1;
+      if (c.type === "stack") return (c as StackControl).items.length;
+      if (c.type === "array") return (c as ArrayControl).updates?.length ?? 1;
       return 1;
     }),
     1
@@ -45,7 +46,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
     <div className="flex flex-col items-center gap-6 w-full">
       <h2 className="text-lg font-bold text-white">Control Manager</h2>
 
-      {/* JSON input */}
+      {/* JSON Input */}
       <textarea
         placeholder='Paste JSON here'
         className="w-full max-w-3xl p-2 border rounded font-mono text-sm"
@@ -95,7 +96,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
             return (
               <StackRenderer
                 key={control.id}
-                control={control}
+                control={control as StackControl}
                 sliderValue={sliderValue}
               />
             );
@@ -104,7 +105,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
             return (
               <ArrayRenderer
                 key={control.id}
-                control={control}
+                control={control as ArrayControl}
                 sliderValue={sliderValue}
               />
             );

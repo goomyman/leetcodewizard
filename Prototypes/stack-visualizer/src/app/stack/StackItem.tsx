@@ -2,7 +2,8 @@
 
 import { motion, useAnimation } from "framer-motion";
 import { useEffect } from "react";
-import { StackItemType, StackItemState, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { StackItemType, StackItemState } from "./ControlTypes";
 
 interface StackItemProps {
   item: StackItemType;
