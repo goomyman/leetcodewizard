@@ -1,56 +1,80 @@
+"use client";
+
 import { motion, useAnimation } from "framer-motion";
 import { useEffect } from "react";
+import { STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface StackItemProps {
   item: ControlItem;
-  index: number;
   stopShaking: boolean;
+  index: number;
 }
 
 export default function StackItem({ item, stopShaking, index }: StackItemProps) {
+  const isPreInsert = item.state === ControlItemState.PreInsert;
+  const isPreRemove = item.state === ControlItemState.PreRemove;
+
   const controls = useAnimation();
 
+  // animation: gentle vertical bounce + pulse
   useEffect(() => {
-    const isPreInsert = item.state === ControlItemState.PreInsert;
-    const isPreRemove = item.state === ControlItemState.PreRemove;
+    const shouldAnimate = (isPreRemove || isPreInsert) && !stopShaking;
+    const baseY = isPreInsert ? -(STACK_ITEM_HEIGHT * 0.05) : 0;
+    const baseX = isPreInsert ? -(STACK_ITEM_WIDTH * 0.30) : 0;
 
-    if ((isPreInsert || isPreRemove) && !stopShaking) {
+    if (shouldAnimate) {
       controls.start({
-        x: isPreInsert ? [-10, 10, -10, 0] : [0, 5, -5, 0],
-        y: isPreInsert ? [0, -5, 5, 0] : [0, 5, -5, 0],
-        scale: [1, 1.05, 1, 1.05, 1],
-        transition: { duration: 1.5, repeat: Infinity },
+        y: [baseY, baseY - 3, baseY, baseY - 3, baseY],
+        x: [baseX, baseX, baseX, baseX, baseX],
+        scale: [1, 1.03, 1, 1.03, 1],
+        transition: {
+          duration: 2.5,
+          repeat: Infinity,
+          repeatType: "loop",
+        },
       });
     } else {
+      controls.stop();
       controls.start({
-        x: 0,
         y: 0,
+        x: 0,
         scale: 1,
         transition: { type: "spring", stiffness: 300, damping: 20 },
       });
     }
-  }, [item.state, stopShaking, controls]);
+  }, [isPreRemove, isPreInsert, stopShaking, controls]);
 
-  const displayColor =
-    item.state === ControlItemState.PreInsert
-      ? "green"
-      : item.state === ControlItemState.PreRemove
-      ? "red"
-      : item.color ?? "gray";
+  // determine background color based on state
+  const displayColor = isPreInsert
+    ? "green"
+    : isPreRemove
+    ? "red"
+    : item.color;
 
   return (
     <motion.div
-      animate={controls}
-      className="flex items-center justify-center font-bold text-white rounded"
       style={{
-        width: 50,
-        height: 50,
-        marginBottom: 4,
+        width: STACK_ITEM_WIDTH,
+        height: STACK_ITEM_HEIGHT,
         backgroundColor: displayColor,
+        borderRadius: 8,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: isPreInsert ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
+        zIndex: isPreInsert ? 10 : 1,
       }}
+      layout // smooth transition from floating → normal stack
+      animate={controls}
+      className="text-sm font-bold text-black"
     >
-      {item.value}
+      <div className="w-full text-left font-bold text-lg pl-3 flex-1">
+        {item.level}
+      </div>
+      <div className="w-full text-center">
+        {item.value}
+      </div>
     </motion.div>
   );
 }
