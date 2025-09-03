@@ -34,6 +34,7 @@ export interface Control<T = ControlItem> {
   batch?: Batch<T>;
   color?: string;
   size?: number;
+  gridPosition?: { col: number; row: number; colSpan?: number; rowSpan?: number };
 }
 
 export type AnyControl = Control<ControlItem>;

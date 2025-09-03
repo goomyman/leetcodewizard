@@ -1,5 +1,5 @@
 import ControlManager from "./stack/ControlManager";
-import { initialControls } from "./stack/InitialData";
+import { initialControls } from "./stack/InitialControls";
 
 export default function Page() {
   return (

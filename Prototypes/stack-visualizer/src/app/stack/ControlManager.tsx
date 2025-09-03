@@ -97,33 +97,39 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
       />
       <p className="text-white">Step: {sliderValue}</p>
 
-      {/* Render controls */}
-      <div className="flex flex-col gap-6 w-full items-center">
+      {/* Grid container */}
+      <div className="grid w-full h-full gap-4"
+        style={{
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateRows: "repeat(2, auto)"
+        }}
+      >
         {controls.map((control, idx) => {
           const currentItems =
             batchProcessors.current[idx].getHistory()[sliderValue] || [];
 
           const controlWithCurrentItems = { ...control, items: currentItems };
 
-          if (control.type === "stack") {
-            return (
-              <StackRenderer
-                key={control.id}
-                control={controlWithCurrentItems}
-              />
-            );
-          }
+          const col = control.gridPosition?.col || 1;
+          const row = control.gridPosition?.row || 1;
+          const colSpan = control.gridPosition?.colSpan || 1;
+          const rowSpan = control.gridPosition?.rowSpan || 1;
 
-          if (control.type === "array") {
-            return (
-              <ArrayRenderer
-                key={control.id}
-                control={controlWithCurrentItems}
-              />
-            );
-          }
-
-          return null;
+          return (
+            <div
+              key={control.id}
+              style={{
+                gridColumn: `${col} / span ${colSpan}`,
+                gridRow: `${row} / span ${rowSpan}`
+              }}
+            >
+              {control.type === "array" ? (
+                <ArrayRenderer control={controlWithCurrentItems} />
+              ) : (
+                <StackRenderer control={controlWithCurrentItems} />
+              )}
+            </div>
+          );
         })}
       </div>
     </div>
