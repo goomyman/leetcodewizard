@@ -36,7 +36,6 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
     normal: {
       y: 0,
       rotate: 0,
-      transition: { type: "spring", stiffness: 300, damping: 20 },
     },
   };
 
@@ -60,6 +59,7 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
       animate={activeVariant}
       variants={variants}
       layout
+      transition={{ type: "spring", stiffness: 175, damping: 50 }}
       className="font-bold text-black"
     >
       {item.value}

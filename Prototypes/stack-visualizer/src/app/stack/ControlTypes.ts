@@ -28,13 +28,6 @@ export interface Batch<T> {
   updates?: { index: number; input: Partial<T> }[];
 }
 
-export interface GridPosition {
-  rowStart: number;     
-  rowEnd: number;     
-  colStart: number;  
-  colEnd: number;
-}
-
 export interface Control<T = ControlItem> {
   id: string;
   type: ControlType;
@@ -42,7 +35,6 @@ export interface Control<T = ControlItem> {
   batch?: Batch<T>;
   color?: string;
   size?: number;
-  gridPosition?: GridPosition
 }
 
 export type AnyControl = Control<ControlItem>;

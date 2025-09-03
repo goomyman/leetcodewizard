@@ -52,6 +52,7 @@ export default function StackItem({ item, index }: StackItemProps) {
       }}
       animate={animationProps}
       layout
+      transition={{ type: "spring", stiffness: 175, damping: 50 }}
       className="text-sm font-bold text-black"
     >
       <div className="w-full text-left font-bold text-lg pl-3 flex-1">
