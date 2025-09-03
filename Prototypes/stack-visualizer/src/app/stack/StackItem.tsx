@@ -62,12 +62,12 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
       }}
       layout
       animate={controls}
-      className="text-sm font-bold text-black"
+      className="text-sm font-bold text-blue-950"
     >
       <div className="w-full text-left font-bold text-lg pl-3 flex-1">
         {item.level}
       </div>
-      <div className="w-full text-center">
+      <div className="w-full text-center justify-end">
         {item.value}
       </div>
     </motion.div>

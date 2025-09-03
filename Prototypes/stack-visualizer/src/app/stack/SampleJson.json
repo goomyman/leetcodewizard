@@ -10,7 +10,9 @@
         ],
         "deletes": []
       }
-    },
+    }
+  ]
+},
     {
       "id": "array1",
       "type": "array",
