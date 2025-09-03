@@ -2,7 +2,7 @@
 
 import React from "react";
 import ArrayItem from "./ArrayItem";
-import { Control, ControlItem } from "./ControlTypes";
+import { Control, ControlItem, ControlItemState, ControlType } from "./ControlTypes";
 
 interface ArrayRendererProps {
   control: Control<ControlItem>;
@@ -13,9 +13,13 @@ export default function ArrayRenderer({ control }: ArrayRendererProps) {
   return (
     <div className="flex flex-col gap-2 items-center">
       <h3 className="text-white font-semibold">{control.id}</h3>
-      <div className="flex gap-2">
+      <div className="flex relative">
         {control.items.map((item, idx) => (
-          <ArrayItem key={item.id} item={item} index={idx} />
+          <ArrayItem
+            key={item.id}
+            item={item}
+            index={idx}
+          />
         ))}
       </div>
     </div>

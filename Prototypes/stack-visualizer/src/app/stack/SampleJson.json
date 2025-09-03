@@ -1,25 +1,11 @@
 {
   "controls": [
     {
-      "id": "stack1",
-      "type": "stack",
-      "batch": {
-        "inserts": [
-          { "index": 0, "input": { "value": "A" } },
-          { "index": 1, "input": { "value": "B" } }
-        ],
-        "deletes": []
-      }
-    }
-  ]
-},
-    {
       "id": "array1",
       "type": "array",
       "batch": {
         "updates": [
-          { "index": 0, "input": { "value": "X" } },
-          { "index": 1, "input": { "value": "Y" } }
+          { "index": 1, "input": { "value": "X" } }
         ]
       }
     }
