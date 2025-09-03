@@ -1,36 +1,49 @@
 "use client";
 
-import { motion, useAnimation } from "framer-motion";
-import { useEffect } from "react";
+import { motion, Variants } from "framer-motion";
 import { ARRAY_ITEM_SIZE } from "./ArrayItemConstants";
 import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayItemProps {
   item: ControlItem;
   index: number;
-  stopShaking: boolean;
 }
 
-export default function ArrayItem({ item, index, stopShaking }: ArrayItemProps) {
+export default function ArrayItem({ item, index }: ArrayItemProps) {
   const isPreUpdate = item.state === ControlItemState.PreUpdate;
-  const controls = useAnimation();
+  const isPreInsert = item.state === ControlItemState.PreInsert;
 
-  useEffect(() => {
-    if (isPreUpdate && !stopShaking) {
-      controls.start({
-        y: [-ARRAY_ITEM_SIZE, -ARRAY_ITEM_SIZE - 5, -ARRAY_ITEM_SIZE],
-        scale: [1, 1.05, 1],
-        transition: { duration: 2, repeat: Infinity, repeatType: "loop" },
-      });
-    } else {
-      controls.stop();
-      controls.start({
-        y: 0,
-        scale: 1,
-        transition: { type: "spring", stiffness: 300, damping: 20 },
-      });
-    }
-  }, [isPreUpdate, stopShaking, controls]);
+  // Define variants for different states
+  const variants: Variants = {
+    preInsert: {
+      y: [-ARRAY_ITEM_SIZE * 1.2, -ARRAY_ITEM_SIZE * 1.2 + 5, -ARRAY_ITEM_SIZE * 1.2],
+      rotate: [-5, 5, -5],
+      transition: {
+        duration: 1.5,
+        repeat: Infinity,
+        repeatType: "loop",
+      },
+    },
+    preUpdate: {
+      y: [-5, 5, -5],
+      rotate: [-5, 5, -5],
+      transition: {
+        duration: 1.5,
+        repeat: Infinity,
+        repeatType: "loop",
+      },
+    },
+    normal: {
+      y: 0,
+      rotate: 0,
+      transition: { type: "spring", stiffness: 300, damping: 20 },
+    },
+  };
+
+  // Pick variant based on state
+  let activeVariant = "normal";
+  if (isPreInsert) activeVariant = "preInsert";
+  else if (isPreUpdate) activeVariant = "preUpdate";
 
   return (
     <motion.div
@@ -44,7 +57,8 @@ export default function ArrayItem({ item, index, stopShaking }: ArrayItemProps) 
         justifyContent: "center",
         margin: 0,
       }}
-      animate={controls}
+      animate={activeVariant}
+      variants={variants}
       layout
       className="font-bold text-black"
     >

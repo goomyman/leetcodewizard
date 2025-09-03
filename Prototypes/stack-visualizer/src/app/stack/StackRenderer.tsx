@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Control, ControlItem, ControlItemState } from "./ControlTypes";
+import { Control, ControlItem } from "./ControlTypes";
 import StackItem from "./StackItem";
 
 interface StackRendererProps {

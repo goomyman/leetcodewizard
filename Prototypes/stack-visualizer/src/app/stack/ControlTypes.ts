@@ -1,5 +1,7 @@
 // ControlTypes.ts
 
+export const getRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
+
 export enum ControlItemState {
   PreInsert = "PreInsert",
   Inserted = "Inserted",

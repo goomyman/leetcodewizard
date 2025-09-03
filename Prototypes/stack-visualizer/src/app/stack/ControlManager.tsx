@@ -3,7 +3,9 @@
 import React, { useState, useRef } from "react";
 import StackRenderer from "./StackRenderer";
 import ArrayRenderer from "./ArrayRenderer";
-import { Control, ControlItem, ControlType, ControlItemState } from "./ControlTypes";
+import { Control, ControlItem, ControlType } from "./ControlTypes";
+import { BatchProcessor } from "./BatchProcessor";
+import { getRandomColor } from "./ControlTypes";
 
 interface ControlManagerProps {
   initialData?: { controls: Control<ControlItem>[] };
@@ -16,85 +18,62 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
   const [sliderValue, setSliderValue] = useState(0);
   const [jsonInput, setJsonInput] = useState("");
 
-  // History per control
-  const controlHistories = useRef<ControlItem[][][]>(
-    controls.map(c => [c.items || []])
+  // Batch processors per control
+  const batchProcessors = useRef<BatchProcessor<ControlItem>[]>(
+    (initialData?.controls || []).map(
+      (c) => new BatchProcessor<ControlItem>([c.items || []])
+    )
   );
 
-  // Staged PreInsert / PreRemove items per control
-  const stagedPreInserts = useRef<ControlItem[][]>(
-    controls.map(() => [])
-  );
-  const stagedPreRemoves = useRef<(number | string)[][]>(
-    controls.map(() => [])
+  // Max steps for slider
+  const maxSteps = Math.max(
+    ...batchProcessors.current.map((bp) => bp.getHistory().length),
+    1
   );
 
-  /** Apply uploaded data */
-  /** Apply uploaded data */
   const handleUpload = (data: { controls: Control<ControlItem>[] }) => {
-    const newControls = data.controls;
-    setControls(newControls);
+    setControls(data.controls);
 
-    newControls.forEach((control, idx) => {
-      const current =
-        [...controlHistories.current[idx]?.[controlHistories.current[idx].length - 1] || []];
+    // Apply batches to each control
+  data.controls.forEach((control, idx) => {
+    const batch = control.batch ?? {};
 
-      // 1️⃣ Commit previous PreRemoves
-      const committedRemoves = stagedPreRemoves.current[idx] || [];
-      let updated = current.filter(item => !committedRemoves.includes(item.id));
+    // Ensure every insert/update in the batch has proper defaults
+    if (batch.inserts) {
+      batch.inserts = batch.inserts.map(insert => ({
+        ...insert,
+        input: {
+          ...insert.input,
+          color: insert.input.color ?? getRandomColor(),
+          level: insert.input.level ?? null,
+        },
+      }));
+    }
 
-      // 2️⃣ Commit previous PreInserts
-      updated = updated.map(item =>
-        item.state === ControlItemState.PreInsert || item.state === ControlItemState.PreUpdate
-          ? { ...item, state: ControlItemState.Inserted }
-          : item
-      );
+    if (batch.updates) {
+      batch.updates = batch.updates.map(update => ({
+        ...update,
+        input: {
+          ...update.input,
+          color: update.input.color ?? getRandomColor(),
+          level: update.input.level ?? null,
+        },
+      }));
+    }
 
-      // 3️⃣ Apply new deletes as PreRemove
-      const deleteIndices = (control.batch?.deletes ?? []).filter(i => i >= 0 && i < updated.length);
-      updated = updated.map((item, i) =>
-        deleteIndices.includes(i) ? { ...item, state: ControlItemState.PreRemove } : item
-      );
+    batchProcessors.current[idx].applyBatch(batch);
+  });
 
-      // 4️⃣ Apply new inserts as PreInsert
-      const insertItems = (control.batch?.inserts ?? []).map(
-        ({ index, input }) =>
-        ({
-          ...input,
-          id: Date.now() + Math.random(),
-          state: ControlItemState.PreInsert,
-          __index: index, // temporary property for sorting
-        } as ControlItem & { __index: number }) // <-- cast locally
-      );
-
-      // Sort inserts by temporary __index
-      insertItems
-        .sort((a, b) => (a.__index ?? 0) - (b.__index ?? 0))
-        .forEach(item => {
-          const idxInsert = Math.min(item.__index ?? 0, updated.length);
-          updated.splice(idxInsert, 0, item);
-          delete (item as any).__index; // remove temporary property after insertion
-        });
-
-      // 5️⃣ Save updated history
-      controlHistories.current[idx] = [
-        ...(controlHistories.current[idx] || []),
-        updated,
-      ];
-
-      // 6️⃣ Stage pre-inserts & pre-removes for next batch
-      stagedPreInserts.current[idx] = insertItems;
-      stagedPreRemoves.current[idx] = updated
-        .filter(item => item.state === ControlItemState.PreRemove)
-        .map(item => item.id);
-    });
+    // After updating batch processors, get the new max step
+    const newMaxSteps = Math.max(
+      ...batchProcessors.current.map(bp => bp.getHistory().length),
+      1
+    );
 
     // Move slider to latest step
-    const maxSteps = Math.max(...controlHistories.current.map(h => h.length));
-    setSliderValue(maxSteps - 1);
+    setSliderValue(newMaxSteps - 1);
   };
 
-  /** File upload handler */
   const handleFileUpload = async (file: File) => {
     try {
       const text = await file.text();
@@ -105,17 +84,11 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
     }
   };
 
-  /** Slider navigation */
-  const goBack = () => setSliderValue(v => Math.max(0, v - 1));
-  const goForward = () => {
-    const maxSteps = Math.max(...controlHistories.current.map(h => h.length));
-    setSliderValue(v => Math.min(maxSteps - 1, v + 1));
-  };
-
-  const maxSteps = Math.max(...controlHistories.current.map(h => h.length), 1);
+  const goBack = () => setSliderValue((v) => Math.max(0, v - 1));
+  const goForward = () => setSliderValue((v) => Math.min(maxSteps - 1, v + 1));
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full p-4">
+    <div className="flex flex-col items-center gap-6 w-full">
       <h2 className="text-lg font-bold text-white">Control Manager</h2>
 
       {/* JSON Input */}
@@ -124,7 +97,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
         className="w-full max-w-3xl p-2 border rounded font-mono text-sm"
         rows={5}
         value={jsonInput}
-        onChange={e => setJsonInput(e.target.value)}
+        onChange={(e) => setJsonInput(e.target.value)}
       />
 
       <div className="flex gap-2">
@@ -145,23 +118,35 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
         <input
           type="file"
           accept="application/json"
-          onChange={e => e.target.files && handleFileUpload(e.target.files[0])}
+          onChange={(e) =>
+            e.target.files && handleFileUpload(e.target.files[0])
+          }
           className="px-3 py-1 bg-gray-300 rounded cursor-pointer"
         />
       </div>
 
       {/* Slider + navigation */}
       <div className="flex items-center gap-4">
-        <button onClick={goBack} className="px-2 py-1 bg-gray-500 text-white rounded">&lt;</button>
+        <button
+          onClick={goBack}
+          className="px-2 py-1 bg-gray-500 text-white rounded"
+        >
+          &lt;
+        </button>
         <input
           type="range"
           min={0}
           max={maxSteps - 1}
           value={sliderValue}
-          onChange={e => setSliderValue(Number(e.target.value))}
+          onChange={(e) => setSliderValue(Number(e.target.value))}
           className="w-96"
         />
-        <button onClick={goForward} className="px-2 py-1 bg-gray-500 text-white rounded">&gt;</button>
+        <button
+          onClick={goForward}
+          className="px-2 py-1 bg-gray-500 text-white rounded"
+        >
+          &gt;
+        </button>
       </div>
       <p className="text-white">Step: {sliderValue}</p>
 
@@ -169,16 +154,26 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
       <div className="flex flex-col gap-6 w-full items-center">
         {controls.map((control, idx) => {
           const currentItems =
-            controlHistories.current[idx][sliderValue] || [];
+            batchProcessors.current[idx]?.getHistory()[sliderValue] || [];
 
           const controlWithCurrentItems = { ...control, items: currentItems };
 
           if (control.type === ControlType.Stack) {
-            return <StackRenderer key={control.id} control={controlWithCurrentItems} />;
+            return (
+              <StackRenderer
+                key={control.id}
+                control={controlWithCurrentItems}
+              />
+            );
           }
 
           if (control.type === ControlType.Array) {
-            return <ArrayRenderer key={control.id} control={controlWithCurrentItems} />;
+            return (
+              <ArrayRenderer
+                key={control.id}
+                control={controlWithCurrentItems}
+              />
+            );
           }
 
           return null;
