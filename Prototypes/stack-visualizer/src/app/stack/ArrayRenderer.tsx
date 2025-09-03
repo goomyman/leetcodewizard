@@ -1,12 +1,13 @@
+// ArrayRenderer.tsx
 "use client";
 
 import React from "react";
 import ArrayItem from "./ArrayItem";
-import { Control, ControlItemState, HistoryItem } from "./ControlTypes";
+import { Control, ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayRendererProps {
-  control: Control; // generic union
-  sliderValue: number;
+  control: Control<ControlItem>;
+  sliderValue?: number; // if needed
 }
 
 export default function ArrayRenderer({ control }: ArrayRendererProps) {
@@ -14,7 +15,7 @@ export default function ArrayRenderer({ control }: ArrayRendererProps) {
     <div className="flex flex-col gap-2 items-center">
       <h3 className="text-white font-semibold">{control.id}</h3>
       <div className="flex">
-        {(control.items as HistoryItem[]).map((item, idx) => (
+        {control.items.map((item, idx) => (
           <ArrayItem
             key={item.id}
             item={item}

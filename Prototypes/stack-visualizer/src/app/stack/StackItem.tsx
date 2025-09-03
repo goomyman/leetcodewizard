@@ -3,10 +3,10 @@
 import { motion, useAnimation } from "framer-motion";
 import { useEffect } from "react";
 import { STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
-import { StackItemType, ControlItemState } from "./ControlTypes";
+import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface StackItemProps {
-  item: StackItemType;
+  item: ControlItem;
   stopShaking: boolean;
   stackIndex: number;
 }
@@ -21,18 +21,14 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
   useEffect(() => {
     const shouldAnimate = (isPreRemove || isPreInsert) && !stopShaking;
     const baseY = isPreInsert ? -(STACK_ITEM_HEIGHT * 0.05) : 0;
-    const baseX = isPreInsert ? -(STACK_ITEM_WIDTH * 0.30) : 0;
+    const baseX = isPreInsert ? -(STACK_ITEM_WIDTH * 0.3) : 0;
 
     if (shouldAnimate) {
       controls.start({
         y: [baseY, baseY - 3, baseY, baseY - 3, baseY],
         x: [baseX, baseX, baseX, baseX, baseX],
         scale: [1, 1.03, 1, 1.03, 1],
-        transition: {
-          duration: 2.5,
-          repeat: Infinity,
-          repeatType: "loop",
-        },
+        transition: { duration: 2.5, repeat: Infinity, repeatType: "loop" },
       });
     } else {
       controls.stop();
@@ -45,7 +41,6 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
     }
   }, [isPreRemove, isPreInsert, stopShaking, controls]);
 
-  // determine background color based on state
   const displayColor = isPreInsert
     ? "green"
     : isPreRemove
@@ -65,7 +60,7 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
         boxShadow: isPreInsert ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
         zIndex: isPreInsert ? 10 : 1,
       }}
-      layout // smooth transition from floating → normal stack
+      layout
       animate={controls}
       className="text-sm font-bold text-black"
     >
@@ -73,7 +68,7 @@ export default function StackItem({ item, stopShaking, stackIndex }: StackItemPr
         {item.level}
       </div>
       <div className="w-full text-center">
-        {item.text}
+        {item.value}
       </div>
     </motion.div>
   );

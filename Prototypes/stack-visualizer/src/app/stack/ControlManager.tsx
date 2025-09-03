@@ -3,15 +3,15 @@
 import React, { useState, useRef } from "react";
 import StackRenderer from "./StackRenderer";
 import ArrayRenderer from "./ArrayRenderer";
-import { StackControl, ArrayControl, Control } from "./ControlTypes";
+import { Control, ControlItem } from "./ControlTypes";
 import { BatchProcessor } from "./BatchProcessor";
 
 interface ControlManagerProps {
-  initialData?: { controls: (StackControl | ArrayControl)[] };
+  initialData?: { controls: Control<ControlItem>[] };
 }
 
 export default function ControlManager({ initialData }: ControlManagerProps) {
-  const [controls, setControls] = useState<Control<any>[]>(
+  const [controls, setControls] = useState<Control<ControlItem>[]>(
     initialData?.controls || []
   );
   const [sliderValue, setSliderValue] = useState(0);
@@ -19,14 +19,13 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
 
   // Batch processors per control
   const batchProcessors = useRef(
-    controls.map(c => new BatchProcessor<any>([c.items || []]))
+    controls.map(c => new BatchProcessor<ControlItem>([c.items || []]))
   );
 
-  const handleUpload = (data: { controls: Control<any>[] }) => {
+  const handleUpload = (data: { controls: Control<ControlItem>[] }) => {
     setControls(data.controls);
     setSliderValue(0);
 
-    // Apply batch to each processor
     data.controls.forEach((control, idx) => {
       const batch = control.batch ?? {};
       batchProcessors.current[idx].applyBatch(batch);
@@ -104,12 +103,13 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
           const currentItems =
             batchProcessors.current[idx].getHistory()[sliderValue] || [];
 
+          const controlWithCurrentItems = { ...control, items: currentItems };
+
           if (control.type === "stack") {
             return (
               <StackRenderer
                 key={control.id}
-                control={{ ...control, items: currentItems }}
-                sliderValue={sliderValue}
+                control={controlWithCurrentItems}
               />
             );
           }
@@ -118,8 +118,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
             return (
               <ArrayRenderer
                 key={control.id}
-                control={{ ...control, items: currentItems }}
-                sliderValue={sliderValue}
+                control={controlWithCurrentItems}
               />
             );
           }

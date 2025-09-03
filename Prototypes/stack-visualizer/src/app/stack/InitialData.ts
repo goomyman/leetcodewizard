@@ -1,24 +1,30 @@
-// InitialData.ts (optional)
-import { Control, ControlTypes, ControlItemState } from "./ControlTypes";
+import { Control, ControlItemState, ControlTypes } from "./ControlTypes";
 
 export const initialControls: { controls: Control[] } = {
   controls: [
     {
       id: "stack1",
       type: ControlTypes.Stack,
-      items: [
-        { id: 1, text: "A", state: ControlItemState.Start, color: "#f87171" },
-        { id: 2, text: "B", state: ControlItemState.Start, color: "#4ade80" }
-      ]
+      items: [], // start empty
+      batch: {
+        inserts: [
+          { index: 0, input: { value: "A", state: ControlItemState.Start } },
+          { index: 1, input: { value: "B", state: ControlItemState.Start } }
+        ],
+        deletes: []
+      }
     },
     {
       id: "array1",
       type: ControlTypes.Array,
       size: 5,
-      updates: [
-        { index: 0, value: "X" },
-        { index: 2, value: "Y" }
-      ]
+      items: [], // start empty
+      batch: {
+        updates: [
+          { index: 0, input: { value: "X", state: ControlItemState.Start } },
+          { index: 3, input: { value: "Y", state: ControlItemState.Start } }
+        ]
+      }
     }
   ]
 };

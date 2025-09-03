@@ -2,16 +2,17 @@
 
 import { motion, useAnimation } from "framer-motion";
 import { useEffect } from "react";
-import { ArrayItemType, ArrayItemState, ARRAY_ITEM_SIZE } from "./ArrayItemConstants";
+import { ARRAY_ITEM_SIZE } from "./ArrayItemConstants";
+import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayItemProps {
-  item: ArrayItemType;
+  item: ControlItem;
   index: number;
   stopShaking: boolean;
 }
 
 export default function ArrayItem({ item, index, stopShaking }: ArrayItemProps) {
-  const isPreUpdate = item.state === ArrayItemState.PreUpdate;
+  const isPreUpdate = item.state === ControlItemState.PreUpdate;
   const controls = useAnimation();
 
   useEffect(() => {
@@ -23,7 +24,11 @@ export default function ArrayItem({ item, index, stopShaking }: ArrayItemProps) 
       });
     } else {
       controls.stop();
-      controls.start({ y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 20 } });
+      controls.start({
+        y: 0,
+        scale: 1,
+        transition: { type: "spring", stiffness: 300, damping: 20 },
+      });
     }
   }, [isPreUpdate, stopShaking, controls]);
 
