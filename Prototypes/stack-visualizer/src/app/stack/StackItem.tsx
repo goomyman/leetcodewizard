@@ -1,51 +1,36 @@
 "use client";
 
-import { motion, useAnimation } from "framer-motion";
-import { useEffect } from "react";
+import { motion } from "framer-motion";
 import { STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
 import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface StackItemProps {
   item: ControlItem;
-  stopShaking: boolean;
-  index: number;
+  index?: number;
 }
 
-export default function StackItem({ item, stopShaking, index }: StackItemProps) {
+export default function StackItem({ item, index }: StackItemProps) {
   const isPreInsert = item.state === ControlItemState.PreInsert;
   const isPreRemove = item.state === ControlItemState.PreRemove;
 
-  const controls = useAnimation();
+  // Offset for pre-states
+  const baseY = isPreInsert ? -STACK_ITEM_HEIGHT * 0.05 : 0;
+  const baseX = isPreInsert ? -STACK_ITEM_WIDTH * 0.3 : 0;
 
-  // animation: gentle vertical bounce + pulse
-  useEffect(() => {
-    const shouldAnimate = (isPreRemove || isPreInsert) && !stopShaking;
-    const baseY = isPreInsert ? -(STACK_ITEM_HEIGHT * 0.05) : 0;
-    const baseX = isPreInsert ? -(STACK_ITEM_WIDTH * 0.30) : 0;
-
-    if (shouldAnimate) {
-      controls.start({
-        y: [baseY, baseY - 3, baseY, baseY - 3, baseY],
+  // Animate in place around offset
+  const animationProps = isPreInsert || isPreRemove
+    ? {
+        y: [baseY, baseY - 1, baseY, baseY - 1, baseY],
         x: [baseX, baseX, baseX, baseX, baseX],
-        scale: [1, 1.03, 1, 1.03, 1],
+        scale: [1, 1.02, 1, 1.02, 1],
         transition: {
-          duration: 2.5,
+          duration: 3,
           repeat: Infinity,
-          repeatType: "loop",
+          repeatType: "loop" as const,
         },
-      });
-    } else {
-      controls.stop();
-      controls.start({
-        y: 0,
-        x: 0,
-        scale: 1,
-        transition: { type: "spring", stiffness: 300, damping: 20 },
-      });
-    }
-  }, [isPreRemove, isPreInsert, stopShaking, controls]);
+      }
+    : { x: 0, y: 0, scale: 1 };
 
-  // determine background color based on state
   const displayColor = isPreInsert
     ? "green"
     : isPreRemove
@@ -65,8 +50,8 @@ export default function StackItem({ item, stopShaking, index }: StackItemProps) 
         boxShadow: isPreInsert ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
         zIndex: isPreInsert ? 10 : 1,
       }}
-      layout // smooth transition from floating → normal stack
-      animate={controls}
+      animate={animationProps}
+      layout
       className="text-sm font-bold text-black"
     >
       <div className="w-full text-left font-bold text-lg pl-3 flex-1">

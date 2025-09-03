@@ -18,7 +18,6 @@ export default function StackRenderer({ control }: StackRendererProps) {
           key={item.id}
           item={item}
           index={idx}
-          stopShaking={item.state !== ControlItemState.PreUpdate}
         />
       ))}
     </div>
