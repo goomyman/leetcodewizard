@@ -3,7 +3,7 @@
 import React, { useState, useRef } from "react";
 import StackRenderer from "./StackRenderer";
 import ArrayRenderer from "./ArrayRenderer";
-import { Control, ControlItem } from "./ControlTypes";
+import { Control, ControlItem, ControlType } from "./ControlTypes";
 import { BatchProcessor } from "./BatchProcessor";
 
 interface ControlManagerProps {
@@ -18,18 +18,35 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
   const [jsonInput, setJsonInput] = useState("");
 
   // Batch processors per control
-  const batchProcessors = useRef(
-    controls.map(c => new BatchProcessor<ControlItem>([c.items || []]))
+  const batchProcessors = useRef<BatchProcessor<ControlItem>[]>(
+    (initialData?.controls || []).map(
+      (c) => new BatchProcessor<ControlItem>([c.items || []])
+    )
+  );
+
+  // Max steps for slider
+  const maxSteps = Math.max(
+    ...batchProcessors.current.map((bp) => bp.getHistory().length),
+    1
   );
 
   const handleUpload = (data: { controls: Control<ControlItem>[] }) => {
     setControls(data.controls);
-    setSliderValue(0);
 
+    // Apply batches to each control
     data.controls.forEach((control, idx) => {
       const batch = control.batch ?? {};
       batchProcessors.current[idx].applyBatch(batch);
     });
+
+    // After updating batch processors, get the new max step
+    const newMaxSteps = Math.max(
+      ...batchProcessors.current.map(bp => bp.getHistory().length),
+      1
+    );
+
+    // Move slider to latest step
+    setSliderValue(newMaxSteps - 1);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -42,11 +59,8 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
     }
   };
 
-  // Max steps for slider
-  const maxSteps = Math.max(
-    ...batchProcessors.current.map(bp => bp.getHistory().length),
-    1
-  );
+  const goBack = () => setSliderValue((v) => Math.max(0, v - 1));
+  const goForward = () => setSliderValue((v) => Math.min(maxSteps - 1, v + 1));
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
@@ -58,7 +72,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
         className="w-full max-w-3xl p-2 border rounded font-mono text-sm"
         rows={5}
         value={jsonInput}
-        onChange={e => setJsonInput(e.target.value)}
+        onChange={(e) => setJsonInput(e.target.value)}
       />
 
       <div className="flex gap-2">
@@ -79,57 +93,65 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
         <input
           type="file"
           accept="application/json"
-          onChange={e =>
+          onChange={(e) =>
             e.target.files && handleFileUpload(e.target.files[0])
           }
           className="px-3 py-1 bg-gray-300 rounded cursor-pointer"
         />
       </div>
 
-      {/* Slider */}
-      <input
-        type="range"
-        min={0}
-        max={maxSteps - 1}
-        value={sliderValue}
-        onChange={e => setSliderValue(Number(e.target.value))}
-        className="w-full max-w-2xl"
-      />
+      {/* Slider + navigation */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={goBack}
+          className="px-2 py-1 bg-gray-500 text-white rounded"
+        >
+          &lt;
+        </button>
+        <input
+          type="range"
+          min={0}
+          max={maxSteps - 1}
+          value={sliderValue}
+          onChange={(e) => setSliderValue(Number(e.target.value))}
+          className="w-96"
+        />
+        <button
+          onClick={goForward}
+          className="px-2 py-1 bg-gray-500 text-white rounded"
+        >
+          &gt;
+        </button>
+      </div>
       <p className="text-white">Step: {sliderValue}</p>
 
-      {/* Grid container */}
-      <div className="grid w-full h-full gap-4"
-        style={{
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gridTemplateRows: "repeat(2, auto)"
-        }}
-      >
+      {/* Render controls */}
+      <div className="flex flex-col gap-6 w-full items-center">
         {controls.map((control, idx) => {
           const currentItems =
-            batchProcessors.current[idx].getHistory()[sliderValue] || [];
+            batchProcessors.current[idx]?.getHistory()[sliderValue] || [];
 
           const controlWithCurrentItems = { ...control, items: currentItems };
 
-          const col = control.gridPosition?.col || 1;
-          const row = control.gridPosition?.row || 1;
-          const colSpan = control.gridPosition?.colSpan || 1;
-          const rowSpan = control.gridPosition?.rowSpan || 1;
+          if (control.type === ControlType.Stack) {
+            return (
+              <StackRenderer
+                key={control.id}
+                control={controlWithCurrentItems}
+              />
+            );
+          }
 
-          return (
-            <div
-              key={control.id}
-              style={{
-                gridColumn: `${col} / span ${colSpan}`,
-                gridRow: `${row} / span ${rowSpan}`
-              }}
-            >
-              {control.type === "array" ? (
-                <ArrayRenderer control={controlWithCurrentItems} />
-              ) : (
-                <StackRenderer control={controlWithCurrentItems} />
-              )}
-            </div>
-          );
+          if (control.type === ControlType.Array) {
+            return (
+              <ArrayRenderer
+                key={control.id}
+                control={controlWithCurrentItems}
+              />
+            );
+          }
+
+          return null;
         })}
       </div>
     </div>

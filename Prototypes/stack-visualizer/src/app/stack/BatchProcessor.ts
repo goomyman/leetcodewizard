@@ -8,7 +8,7 @@ export interface UploadBatch<T> {
 }
 
 export interface HistoryItem {
-  id: number;
+  id: string | number;
   state: ControlItemState;
   [key: string]: any;
   __index?: number; // temporary for ordering during batch processing
@@ -16,7 +16,7 @@ export interface HistoryItem {
 
 export class BatchProcessor<T extends HistoryItem> {
   private stagedPreInserts: T[] = [];
-  private stagedPreRemoves: number[] = [];
+  private stagedPreRemoves: (string | number)[] = [];
 
   constructor(private history: T[][] = [[]]) {}
 

@@ -2,10 +2,11 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import StackItem from "./StackItem";
-import { StackItemType, StackItemState, STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface StackProps {
-  stack: StackItemType[];
+  stack: ControlItem[];
 }
 
 export default function Stack({ stack }: StackProps) {
@@ -28,8 +29,8 @@ export default function Stack({ stack }: StackProps) {
           >
             <StackItem
               item={item}
-              stopShaking={item.state !== StackItemState.PreRemove && item.state !== StackItemState.PreInsert}
-              stackIndex={stack.length - index}
+              stopShaking={item.state !== ControlItemState.PreRemove && item.state !== ControlItemState.PreInsert}
+              index={stack.length - index}
             />
           </motion.div>
         ))}

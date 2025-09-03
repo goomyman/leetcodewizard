@@ -1,6 +1,8 @@
+"use client";
+
 import React from "react";
-import { Control, ControlItem } from "./ControlTypes";
-import { STACK_ITEM_WIDTH, STACK_ITEM_HEIGHT } from "./StackItemConstants";
+import { Control, ControlItem, ControlItemState } from "./ControlTypes";
+import StackItem from "./StackItem";
 
 interface StackRendererProps {
   control: Control<ControlItem>;
@@ -8,22 +10,16 @@ interface StackRendererProps {
 
 export default function StackRenderer({ control }: StackRendererProps) {
   return (
-    <div
-      className="flex flex-col justify-end items-center relative border-transparent"
-      style={{
-        width: STACK_ITEM_WIDTH,
-        minHeight: STACK_ITEM_HEIGHT * 20, // ensures enough height for justify-end
-        height: "100%", // make it fill the grid row
-      }}
-    >
+    <div className="flex flex-col justify-end gap-1 border p-2 bg-gray-800 rounded h-64">
+      <h3 className="text-white font-semibold">{control.id}</h3>
+      {/* Render items in order: newest on top */}
       {control.items.map((item, idx) => (
-        <div
-          key={item.id || idx}
-          className={`m-1 bg-green-400 flex items-center justify-center`}
-          style={{ width: `${STACK_ITEM_WIDTH}px`, height: `${STACK_ITEM_HEIGHT}px` }}
-        >
-          {item.value}
-        </div>
+        <StackItem
+          key={item.id}
+          item={item}
+          index={idx}
+          stopShaking={item.state !== ControlItemState.PreUpdate}
+        />
       ))}
     </div>
   );

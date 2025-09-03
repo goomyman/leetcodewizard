@@ -1,20 +1,19 @@
 // ControlTypes.ts
 
 export enum ControlItemState {
-  Start = "Start",
   PreInsert = "PreInsert",
   Inserted = "Inserted",
   PreRemove = "PreRemove",
   PreUpdate = "PreUpdate",
 }
 
-export enum ControlTypes {
+export enum ControlType {
   Stack = "stack",
   Array = "array",
 }
 
 export interface ControlItem {
-  id: number;
+  id: number | string;
   value?: any;
   level?: number | null;
   color?: string;
@@ -27,14 +26,21 @@ export interface Batch<T> {
   updates?: { index: number; input: Partial<T> }[];
 }
 
+export interface GridPosition {
+  rowStart: number;     
+  rowEnd: number;     
+  colStart: number;  
+  colEnd: number;
+}
+
 export interface Control<T = ControlItem> {
   id: string;
-  type: ControlTypes;
+  type: ControlType;
   items: T[];
   batch?: Batch<T>;
   color?: string;
   size?: number;
-  gridPosition?: { col: number; row: number; colSpan?: number; rowSpan?: number };
+  gridPosition?: GridPosition
 }
 
 export type AnyControl = Control<ControlItem>;
