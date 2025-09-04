@@ -7,7 +7,7 @@ export enum ControlItemState {
   Inserted = "Inserted",
   PreRemove = "PreRemove",
   PreUpdate = "PreUpdate",
-  Deleted = "Deleted",
+  Removed = "Deleted",
 }
 
 export enum ControlType {
@@ -21,7 +21,7 @@ export interface ControlItem {
   level?: number | null;
   color?: string;
   state: ControlItemState;
-  targetIndex?: number | null;
+  targetIndex?: number;
 }
 
 export interface Batch<T> {
