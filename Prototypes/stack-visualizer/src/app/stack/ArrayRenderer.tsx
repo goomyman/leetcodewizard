@@ -2,7 +2,7 @@
 
 import React from "react";
 import ArrayItem from "./ArrayItem";
-import { Control, ControlItem, ControlItemState } from "./ControlTypes";
+import { Control, ControlItem } from "./ControlTypes";
 import { ARRAY_ITEM_SIZE } from "./ArrayItemConstants";
 
 interface ArrayRendererProps {
@@ -11,17 +11,12 @@ interface ArrayRendererProps {
 }
 
 export default function ArrayRenderer({ control, onRemoved }: ArrayRendererProps) {
-  const GAP = 8;
-
   return (
     <div className="flex flex-col items-center">
       <h3 className="text-white font-semibold">{control.id}</h3>
-      <div className="relative flex">
+      <div className="relative" style={{ height: ARRAY_ITEM_SIZE }}>
         {control.items.map((item, idx) => {
-
-          // Use targetIndex if floating, else normal idx
           const slotIndex = item.targetIndex ?? idx;
-
           return (
             <ArrayItem
               key={item.id}

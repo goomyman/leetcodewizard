@@ -6,7 +6,7 @@ import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayItemProps {
   item: ControlItem;
-  index: number; // horizontal slot
+  index: number;
   onRemoved?: (id: string) => void;
 }
 
@@ -14,16 +14,14 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
   const isPreUpdate = item.state === ControlItemState.PreUpdate;
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isRemoved = item.state === ControlItemState.Removed;
-  const isPreInsert = item.state === ControlItemState.PreInsert;
 
-  const floating = isPreUpdate || isPreRemove || isRemoved || isPreInsert;
+  const floating = isPreUpdate || isPreRemove || isRemoved;
 
-  // Base Y offset for floating items
-  const baseY = isPreInsert || isPreUpdate ? -ARRAY_ITEM_SIZE - 6 : 0;
+  const baseY = isPreUpdate ? -ARRAY_ITEM_SIZE - 6 : 0;
 
   let animationProps: any = { y: 0, scale: 1, rotate: 0, opacity: 1 };
 
-  if (isPreInsert || isPreUpdate) {
+  if (isPreUpdate) {
     animationProps = {
       y: [baseY, baseY - 5, baseY, baseY - 5, baseY],
       scale: [1, 1, 1, 1, 1],
@@ -46,9 +44,7 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
     };
   }
 
-  const displayColor = isPreInsert
-    ? "green"
-    : isPreUpdate
+  const displayColor = isPreUpdate
     ? "yellow"
     : isPreRemove
     ? "red"
@@ -70,9 +66,9 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
         justifyContent: "center",
         fontWeight: "bold",
         zIndex: floating ? 10 : 1,
-        position: floating ? "absolute" : "relative",
-        left: floating ? index * (ARRAY_ITEM_SIZE + GAP) : undefined,
-        top: floating ? 0 : undefined,
+        position: "absolute",
+        left: index * (ARRAY_ITEM_SIZE + GAP),
+        top: 0,
       }}
       animate={animationProps}
       layout={!floating}
