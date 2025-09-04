@@ -6,22 +6,21 @@ import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayItemProps {
   item: ControlItem;
-  index: number; // target horizontal slot
+  index: number; // horizontal slot
+  onRemoved?: (id: string) => void;
 }
 
-export default function ArrayItem({ item, index }: ArrayItemProps) {
-  const isPreInsert = item.state === ControlItemState.PreInsert;
+export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
   const isPreUpdate = item.state === ControlItemState.PreUpdate;
   const isPreRemove = item.state === ControlItemState.PreRemove;
-  const isDeleted = item.state === ControlItemState.Removed;
+  const isRemoved = item.state === ControlItemState.Removed;
+  const isPreInsert = item.state === ControlItemState.PreInsert;
 
-  // Only floating items (animated above layout)
-  const floating = isPreInsert || isPreUpdate || isDeleted;
+  const floating = isPreUpdate || isPreRemove || isRemoved || isPreInsert;
 
-  // Base offset for PreInsert / PreUpdate
+  // Base Y offset for floating items
   const baseY = isPreInsert || isPreUpdate ? -ARRAY_ITEM_SIZE - 6 : 0;
 
-  // Animation
   let animationProps: any = { y: 0, scale: 1, rotate: 0, opacity: 1 };
 
   if (isPreInsert || isPreUpdate) {
@@ -37,11 +36,11 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
       rotate: [0, 0, 0],
       transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
     };
-  } else if (isDeleted) {
+  } else if (isRemoved) {
     animationProps = {
       y: ARRAY_ITEM_SIZE * 1.5,
       opacity: 0,
-      scale: 1,
+      scale: 0.8,
       rotate: 10,
       transition: { duration: 0.5, ease: "easeIn" },
     };
@@ -53,11 +52,11 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
     ? "yellow"
     : isPreRemove
     ? "red"
-    : isDeleted
+    : isRemoved
     ? "red"
     : item.color;
 
-  const GAP = 0;
+  const GAP = 8;
 
   return (
     <motion.div
@@ -77,9 +76,8 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
       }}
       animate={animationProps}
       layout={!floating}
-      transition={{ type: "spring", stiffness: 175, damping: 50 }}
       onAnimationComplete={() => {
-        // Optional: handle Deleted items removal
+        if (isRemoved && onRemoved) onRemoved(String(item.id));
       }}
     >
       {item.value}
