@@ -6,7 +6,6 @@ import { Control, ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayRendererProps {
   control: Control<ControlItem>;
-  sliderValue?: number;
 }
 
 export default function ArrayRenderer({ control }: ArrayRendererProps) {
@@ -14,7 +13,7 @@ export default function ArrayRenderer({ control }: ArrayRendererProps) {
     <div className="flex flex-col gap-2 items-center">
       <h3 className="text-white font-semibold">{control.id}</h3>
       <div className="relative flex">
-        {/* Normal and PreRemove items participate in flex layout */}
+        {/* Normal and PreRemove items in flex layout */}
         {control.items
           .filter(
             item =>
@@ -26,7 +25,7 @@ export default function ArrayRenderer({ control }: ArrayRendererProps) {
             <ArrayItem key={item.id} item={item} index={idx} />
           ))}
 
-        {/* Floating items: PreInsert, PreUpdate, Deleted */}
+        {/* PreInsert, PreUpdate, Deleted items rendered last (floating above) */}
         {control.items
           .filter(
             item =>
