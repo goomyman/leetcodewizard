@@ -18,7 +18,7 @@ export class BatchProcessor<T extends HistoryItem> {
   private stagedPreInserts: T[] = [];
   private stagedPreRemoves: (string | number)[] = [];
 
-  constructor(private history: T[][] = [[]]) {}
+  constructor(private history: T[][] = [[]]) { }
 
   getCurrent(): T[] {
     return this.history[this.history.length - 1];
@@ -69,11 +69,16 @@ export class BatchProcessor<T extends HistoryItem> {
         delete item.__index;
       });
 
-    // 5️⃣ Apply updates as PreUpdate
+    // Apply updates as PreUpdate
     const updateItems: T[] =
       (batch.updates ?? []).map(({ index, input }) => {
-        // Remove existing node immediately
-        if (index >= 0 && index < current.length) current.splice(index, 1);
+        if (index >= 0 && index < current.length) {
+          // Flag the existing item to be deleted (PreDelete) instead of removing immediately
+          current[index] = {
+            ...current[index],
+            state: ControlItemState.PreRemove,
+          };
+        }
 
         // Add new pre-update node at the same index
         return {
@@ -83,6 +88,7 @@ export class BatchProcessor<T extends HistoryItem> {
           __index: index,
         } as T;
       });
+
 
     updateItems
       .sort((a, b) => (a.__index ?? 0) - (b.__index ?? 0))
