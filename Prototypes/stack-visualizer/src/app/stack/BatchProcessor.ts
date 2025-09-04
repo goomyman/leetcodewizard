@@ -9,7 +9,7 @@ export interface UploadBatch<T> {
 export interface HistoryItem {
   id: string | number;
   state: ControlItemState;
-  targetIndex?: number; // for floating items
+  targetIndex?: number; // used for floating items and falling items
   [key: string]: any;
 }
 
@@ -25,65 +25,66 @@ export class BatchProcessor<T extends HistoryItem> {
   public applyBatch(batch: UploadBatch<T>) {
     let current = [...this.getCurrent()];
 
-    // 1️⃣ Commit previous PreUpdate → Inserted
+    // 1️⃣ Remove previously Removed items
+    if (this.stagedPreRemoves.length > 0) {
+      current = current.filter(item => !this.stagedPreRemoves.includes(item.id));
+    }
+
+    // 2️⃣ Commit previous PreInsert / PreUpdate → Inserted
     current = current.map(item =>
-      item.state === ControlItemState.PreUpdate
+      item.state === ControlItemState.PreInsert || item.state === ControlItemState.PreUpdate
         ? { ...item, state: ControlItemState.Inserted, targetIndex: undefined }
         : item
     );
 
-    // 2️⃣ Commit previous PreRemove → Removed (they will animate falling)
-    current = current.map(item =>
-      item.state === ControlItemState.PreRemove
-        ? { ...item, state: ControlItemState.Removed }
-        : item
-    );
-
-    // 3️⃣ Apply deletes as PreRemove
-    const deleteIndices = Array.from(
+    // 3️⃣ Apply deletes → mark as PreRemove, set targetIndex for animation
+    const deleteIndices: number[] = Array.from(
       new Set(batch.deletes?.filter(i => i >= 0 && i < current.length) ?? [])
     );
 
     current = current.map((item, idx) =>
-      deleteIndices.includes(idx)
+      deleteIndices.includes(idx) && item.state !== ControlItemState.PreRemove
         ? { ...item, state: ControlItemState.PreRemove, targetIndex: idx }
         : item
     );
 
-    // 4️⃣ Apply inserts as PreUpdate
-    (batch.inserts ?? []).forEach(({ index, input }) => {
-      const newItem: T = {
+    // 4️⃣ Apply inserts → mark as PreInsert, floating above index
+    const insertItems: T[] =
+      (batch.inserts ?? []).map(({ index, input }) => ({
         ...input,
         id: Date.now() + Math.random(),
-        state: ControlItemState.PreUpdate,
+        state: ControlItemState.PreInsert,
         targetIndex: index,
-      } as T;
-      current.splice(index, 0, newItem);
+      })) as T[];
+
+    insertItems.forEach(item => {
+      const idx = Math.min(item.targetIndex ?? 0, current.length);
+      current.splice(idx, 0, item);
     });
 
-    // 5️⃣ Apply updates
-    (batch.updates ?? []).forEach(({ index, input }) => {
-      if (index >= 0 && index < current.length) {
-        // Mark existing item to be removed
-        current[index] = {
-          ...current[index],
-          state: ControlItemState.PreRemove,
+    // 5️⃣ Apply updates → old item PreRemove, new item PreUpdate floating above
+    const updateItems: T[] =
+      (batch.updates ?? []).map(({ index, input }) => {
+        if (index >= 0 && index < current.length) {
+          const oldItem = current[index];
+          // Mark existing as PreRemove
+          current[index] = { ...oldItem, state: ControlItemState.PreRemove, targetIndex: index };
+        }
+
+        return {
+          ...input,
+          id: Date.now() + Math.random(),
+          state: ControlItemState.PreUpdate,
           targetIndex: index,
-        };
-      }
+        } as T;
+      });
 
-      // Add new PreUpdate item above
-      const updatedItem: T = {
-        ...input,
-        id: Date.now() + Math.random(),
-        state: ControlItemState.PreUpdate,
-        targetIndex: index,
-      } as T;
-
-      current.splice(index, 0, updatedItem);
+    updateItems.forEach(item => {
+      const idx = Math.min(item.targetIndex ?? 0, current.length);
+      current.splice(idx, 0, item);
     });
 
-    // 6️⃣ Save to history
+    // 6️⃣ Save history
     this.history.push(current);
 
     // 7️⃣ Stage PreRemove items for next batch

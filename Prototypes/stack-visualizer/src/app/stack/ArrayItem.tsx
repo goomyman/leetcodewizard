@@ -11,17 +11,18 @@ interface ArrayItemProps {
 }
 
 export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
+  const isPreInsert = item.state === ControlItemState.PreInsert;
   const isPreUpdate = item.state === ControlItemState.PreUpdate;
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isRemoved = item.state === ControlItemState.Removed;
 
-  const floating = isPreUpdate || isPreRemove || isRemoved;
+  const floating = isPreInsert || isPreUpdate || isPreRemove || isRemoved;
 
-  const baseY = isPreUpdate ? -ARRAY_ITEM_SIZE - 6 : 0;
+  const baseY = isPreInsert || isPreUpdate ? -ARRAY_ITEM_SIZE - 6 : 0;
 
   let animationProps: any = { y: 0, scale: 1, rotate: 0, opacity: 1 };
 
-  if (isPreUpdate) {
+  if (isPreInsert || isPreUpdate) {
     animationProps = {
       y: [baseY, baseY - 5, baseY, baseY - 5, baseY],
       scale: [1, 1, 1, 1, 1],
@@ -44,7 +45,9 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
     };
   }
 
-  const displayColor = isPreUpdate
+  const displayColor = isPreInsert
+    ? "green"
+    : isPreUpdate
     ? "yellow"
     : isPreRemove
     ? "red"
