@@ -41,7 +41,7 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
     animationProps = {
       y: ARRAY_ITEM_SIZE * 1.5,
       opacity: 0,
-      scale: 0.8,
+      scale: 1,
       rotate: 10,
       transition: { duration: 0.5, ease: "easeIn" },
     };
@@ -57,6 +57,8 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
     ? "red"
     : item.color;
 
+  const GAP = 0;
+
   return (
     <motion.div
       style={{
@@ -70,7 +72,7 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
         fontWeight: "bold",
         zIndex: floating ? 10 : 1,
         position: floating ? "absolute" : "relative",
-        left: floating ? index * (ARRAY_ITEM_SIZE + 8) : undefined,
+        left: floating ? index * (ARRAY_ITEM_SIZE + GAP) : undefined,
         top: floating ? 0 : undefined,
       }}
       animate={animationProps}
