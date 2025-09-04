@@ -7,6 +7,7 @@ export enum ControlItemState {
   Inserted = "Inserted",
   PreRemove = "PreRemove",
   PreUpdate = "PreUpdate",
+  Deleted = "Deleted",
 }
 
 export enum ControlType {
