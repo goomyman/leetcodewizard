@@ -12,30 +12,35 @@ interface ArrayItemProps {
 export default function ArrayItem({ item, index }: ArrayItemProps) {
   const isPreInsert = item.state === ControlItemState.PreInsert;
   const isPreUpdate = item.state === ControlItemState.PreUpdate;
+  const isPreRemove = item.state === ControlItemState.PreRemove;
+
+  // Only floating for PreInsert / PreUpdate
   const isFloating = isPreInsert || isPreUpdate;
 
-  // Base offsets for floating items
-  const baseY = isFloating ? -ARRAY_ITEM_SIZE - 6: 0;
-  const baseX = isFloating ? 0 : 0; // horizontal offset can be 0 since we position via left
+  const baseY = isFloating ? -ARRAY_ITEM_SIZE -6: 0;
 
-  // Wiggle / hover animation for floating items
-  const animationProps = isFloating
+  // Animation
+  const animationProps = isPreInsert || isPreUpdate
     ? {
         y: [baseY, baseY - 5, baseY, baseY - 5, baseY],
-        scale: [1, 1.02, 1, 1.02, 1],
-        transition: {
-          duration: 3,
-          repeat: Infinity,
-          repeatType: "loop" as const,
-        },
+        scale: [1, 1, 1, 1, 1],
+        transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
       }
-    : { y: 0, scale: 1 };
+    : isPreRemove
+    ? {
+        y: [0, 0, 0, 0, 0],
+        scale: [1, 1, 1, 1, 1],
+        rotate: [0,0, 0, 0],
+        transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
+      }
+    : { y: 0, scale: 1, rotate: 0 };
 
-  // Color by state
   const displayColor = isPreInsert
     ? "green"
     : isPreUpdate
     ? "yellow"
+    : isPreRemove
+    ? "red"
     : item.color;
 
   return (
@@ -50,12 +55,12 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
         justifyContent: "center",
         fontWeight: "bold",
         zIndex: isFloating ? 10 : 1,
-        position: isFloating ? "absolute" : "relative", // ← float above flex flow
-        left: isFloating ? index * (ARRAY_ITEM_SIZE + 8) : undefined, // place above slot
+        position: isFloating ? "absolute" : "relative", // only float PreInsert/PreUpdate
+        left: isFloating ? index * (ARRAY_ITEM_SIZE + 8) : undefined,
         top: isFloating ? 0 : undefined,
       }}
       animate={animationProps}
-      layout={!isFloating} // only animate layout for normal items
+      layout={!isFloating} // only layout normal and PreRemove items
       transition={{ type: "spring", stiffness: 175, damping: 50 }}
     >
       {item.value}
