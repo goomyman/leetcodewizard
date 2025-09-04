@@ -13,7 +13,7 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
   const isPreInsert = item.state === ControlItemState.PreInsert;
   const isPreUpdate = item.state === ControlItemState.PreUpdate;
   const isPreRemove = item.state === ControlItemState.PreRemove;
-  const isDeleted = item.state === ControlItemState.Deleted;
+  const isDeleted = item.state === ControlItemState.Removed;
 
   // Only floating items (animated above layout)
   const floating = isPreInsert || isPreUpdate || isDeleted;
