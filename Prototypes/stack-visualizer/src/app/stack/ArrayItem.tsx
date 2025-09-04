@@ -6,7 +6,7 @@ import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayItemProps {
   item: ControlItem;
-  index: number; // horizontal slot in the array
+  index: number; // target horizontal slot
 }
 
 export default function ArrayItem({ item, index }: ArrayItemProps) {
@@ -15,32 +15,29 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isDeleted = item.state === ControlItemState.Deleted;
 
-  // Items that need to float above the layout
-  const isFloating = isPreInsert || isPreUpdate || isDeleted;
+  // Only floating items (animated above layout)
+  const floating = isPreInsert || isPreUpdate || isDeleted;
 
-  // Base offsets for floating items
+  // Base offset for PreInsert / PreUpdate
   const baseY = isPreInsert || isPreUpdate ? -ARRAY_ITEM_SIZE - 6 : 0;
 
-  // Animation properties
+  // Animation
   let animationProps: any = { y: 0, scale: 1, rotate: 0, opacity: 1 };
 
-  if (isFloating && (isPreInsert || isPreUpdate )) {
-    // Hover/wiggle for PreInsert / PreUpdate
+  if (isPreInsert || isPreUpdate) {
     animationProps = {
       y: [baseY, baseY - 5, baseY, baseY - 5, baseY],
       scale: [1, 1, 1, 1, 1],
       transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isPreRemove) {
-    // Wiggle in place for PreRemove
     animationProps = {
-      y: [0, 0, 0, 0, 0],
-      scale: [1, 1, 1, 1, 1],
-      rotate: [0, 0, 0, 0, 0],
+      y: [0, 0, 0],
+      scale: [1, 1, 1],
+      rotate: [0, 0, 0],
       transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isDeleted) {
-    // Fall & fade out animation for Deleted items
     animationProps = {
       y: ARRAY_ITEM_SIZE * 1.5,
       opacity: 0,
@@ -50,7 +47,6 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
     };
   }
 
-  // Determine color
   const displayColor = isPreInsert
     ? "green"
     : isPreUpdate
@@ -72,15 +68,16 @@ export default function ArrayItem({ item, index }: ArrayItemProps) {
         alignItems: "center",
         justifyContent: "center",
         fontWeight: "bold",
-        zIndex: isFloating ? 10 : 1,
-        position: isFloating ? "absolute" : "relative",
-        left: isFloating ? index * (ARRAY_ITEM_SIZE + 8) : undefined,
-        top: isFloating ? 0 : undefined,
+        zIndex: floating ? 10 : 1,
+        position: floating ? "absolute" : "relative",
+        left: floating ? index * (ARRAY_ITEM_SIZE + 8) : undefined,
+        top: floating ? 0 : undefined,
       }}
       animate={animationProps}
-      layout={!isFloating} // only normal and PreRemove items participate in layout
+      layout={!floating}
+      transition={{ type: "spring", stiffness: 175, damping: 50 }}
       onAnimationComplete={() => {
-        // Optional callback to remove Deleted items from array/history
+        // Optional: handle Deleted items removal
       }}
     >
       {item.value}
