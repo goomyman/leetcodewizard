@@ -8,6 +8,15 @@
           { "index": 1, "input": { "value": "X" } }
         ]
       }
+    },
+    {
+      "id": "stack1",
+      "type": "stack",
+      "batch": {
+        "inserts": [
+          { "index": 1, "input": { "value": "A" } }
+        ]
+      }
     }
   ]
 }
