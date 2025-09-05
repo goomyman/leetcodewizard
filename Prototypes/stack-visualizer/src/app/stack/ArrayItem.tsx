@@ -11,38 +11,30 @@ interface ArrayItemProps {
 }
 
 export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
-  const isPreInsert = item.state === ControlItemState.PreInsert;
   const isPreUpdate = item.state === ControlItemState.PreUpdate;
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isRemoved = item.state === ControlItemState.Removed;
 
-  const floating = isPreInsert || isPreUpdate || isPreRemove || isRemoved;
+  const floating = isPreUpdate || isPreRemove || isRemoved;
 
   // base Y offset for floating items
   let baseY = 0;
-  if (isPreInsert) baseY = -ARRAY_ITEM_SIZE - 6;
   if (isPreUpdate) baseY = -ARRAY_ITEM_SIZE - 6;
   if (isPreRemove) baseY = 0;
   if (isRemoved) baseY = 0;
 
   let animationProps: any = { y: 0, scale: 1, rotate: 0, opacity: 1 };
 
-  if (isPreInsert) {
+  if (isPreUpdate) {
     animationProps = {
-      y: [baseY, baseY - 5, baseY, baseY - 5, baseY],
-      scale: [1, 1, 1, 1, 1],
-      transition: { duration: 2, repeat: Infinity, repeatType: "loop" as const },
-    };
-  } else if (isPreUpdate) {
-    animationProps = {
-      y: [baseY, baseY - 5, baseY, baseY - 5, baseY],
+      y: [baseY, baseY + 5, baseY, baseY, baseY],
       scale: [1, 1, 1, 1, 1],
       transition: { duration: 2, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isPreRemove) {
     animationProps = {
-      y: [0, -5, 0, 5, 0],
-      rotate: [0, -5, 0, 5, 0],
+      y: [0, 5, 0, 0, 0],
+      rotate: [0, 0, 0, 0, 0],
       scale: [1, 1, 1, 1, 1],
       transition: { duration: 2, repeat: Infinity, repeatType: "loop" as const },
     };
@@ -51,8 +43,8 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
       y: ARRAY_ITEM_SIZE * 1.5,
       opacity: 0,
       scale: 0.8,
-      rotate: 10,
-      transition: { duration: 0.5, ease: "easeIn" },
+      rotate: 25,
+      transition: { duration: .8, ease: "easeIn" },
     };
   } else {
     // Inserted or default
@@ -61,14 +53,12 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
       scale: 1,
       rotate: 0,
       opacity: 1,
-      transition: { duration: 0.3, ease: "easeOut" },
+      transition: { duration: .6, ease: "easeOut" },
     };
   }
 
-  const displayColor = isPreInsert
+  const displayColor =  isPreUpdate
     ? "green"
-    : isPreUpdate
-    ? "yellow"
     : isPreRemove
     ? "red"
     : isRemoved
