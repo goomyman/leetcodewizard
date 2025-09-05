@@ -15,8 +15,8 @@ export default function StackItem({ item, index, onRemoved }: StackItemProps) {
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isRemoved = item.state === ControlItemState.Removed;
 
-  const baseY = isPreInsert ? -STACK_ITEM_HEIGHT * 0.05 : 0;
-  const baseX = isPreInsert ? -STACK_ITEM_WIDTH * 0.3 : 0;
+  const baseY = isPreInsert ? -STACK_ITEM_HEIGHT * 0 : 0;
+  const baseX = isPreInsert ? -STACK_ITEM_WIDTH * 0.6 : 0;
 
   let animationProps: any = { x: 0, y: 0, scale: 1 };
 
@@ -35,12 +35,12 @@ export default function StackItem({ item, index, onRemoved }: StackItemProps) {
     };
   } else if (isRemoved) {
     animationProps = {
-      x: [0, STACK_ITEM_WIDTH * 0.5],   // slide right
-      y: [0, STACK_ITEM_HEIGHT * 1.5],  // then fall down
-      rotate: [0, 25],
+      x: [0, STACK_ITEM_WIDTH * 1.2],   // slide right
+      y: [0, 0, 0, 0, 0, 0, 1, 5, 10, STACK_ITEM_WIDTH * .6, STACK_ITEM_WIDTH * .7],  // then fall down
+      rotate: [0, 0, 0, 0, 0, 0, 0, 1, 2, 5, 30, 70, 90],
       opacity: [1, 0],
       scale: [1, 0.8],
-      transition: { duration: 0.8, ease: "easeIn" },
+      transition: { duration: 1.75, ease: "easeIn" },
     };
   }
 
