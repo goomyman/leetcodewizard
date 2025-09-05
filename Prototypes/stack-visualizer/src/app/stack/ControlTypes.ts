@@ -7,7 +7,7 @@ export enum ControlItemState {
   Inserted = "Inserted",
   PreRemove = "PreRemove",
   PreUpdate = "PreUpdate",
-  Removed = "Deleted"
+  Removed = "Removed"
 }
 
 export enum ControlType {
@@ -26,7 +26,7 @@ export interface ControlItem {
 
 export interface Batch<T> {
   inserts?: { index: number; input: Partial<T> }[];
-  deletes?: number[];
+  deletes?: { index: number; input: Partial<T> }[];
   updates?: { index: number; input: Partial<T> }[];
 }
 

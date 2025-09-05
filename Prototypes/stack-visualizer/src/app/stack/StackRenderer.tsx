@@ -3,6 +3,7 @@
 import React from "react";
 import { Control, ControlItem, ControlItemState } from "./ControlTypes";
 import StackItem from "./StackItem";
+import { STACK_ITEM_HEIGHT, STACK_ITEM_WIDTH } from "./StackItemConstants";
 
 interface StackRendererProps {
   control: Control<ControlItem>;
@@ -10,21 +11,29 @@ interface StackRendererProps {
 }
 
 export default function StackRenderer({ control, onRemoved }: StackRendererProps) {
-  // Filter out fully removed items from render
-  const visibleItems = control.items.filter(
-    item => item.state !== ControlItemState.Removed
-  );
 
-  // Render items newest on top (highest index visually on top)
+  // Minimum stack height in items
+  const minItems = 20; 
+
+  // Compute container height based on max of visible items or minItems
+  const containerHeight = minItems * STACK_ITEM_HEIGHT;
+
   return (
-    <div className="flex flex-col justify-end gap-1 border p-2 bg-gray-800 rounded h-64 relative">
+    <div
+      className="relative flex flex-col border p-2 bg-gray-800 rounded"
+      style={{
+        width: STACK_ITEM_WIDTH + 20,
+        height: containerHeight,
+      }}
+    >
       <h3 className="text-white font-semibold">{control.id}</h3>
-      {visibleItems.map((item, idx) => (
+
+      {control.items.map((item, idx) => (
         <StackItem
           key={item.id}
           item={item}
-          index={idx}
-          onRemoved={onRemoved} // pass callback for removed items
+          index={idx} // index = 0 is bottom
+          onRemoved={onRemoved}
         />
       ))}
     </div>

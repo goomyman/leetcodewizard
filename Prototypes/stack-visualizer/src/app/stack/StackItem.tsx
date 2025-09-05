@@ -6,7 +6,7 @@ import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface StackItemProps {
   item: ControlItem;
-  index?: number;
+  index: number; // bottom = 0
   onRemoved?: (id: string) => void;
 }
 
@@ -15,7 +15,6 @@ export default function StackItem({ item, index, onRemoved }: StackItemProps) {
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isRemoved = item.state === ControlItemState.Removed;
 
-  // Offset for pre-insert
   const baseY = isPreInsert ? -STACK_ITEM_HEIGHT * 0.05 : 0;
   const baseX = isPreInsert ? -STACK_ITEM_WIDTH * 0.3 : 0;
 
@@ -23,26 +22,25 @@ export default function StackItem({ item, index, onRemoved }: StackItemProps) {
 
   if (isPreInsert) {
     animationProps = {
-      y: [baseY, baseY - .5, baseY, baseY - .5, baseY],
+      y: [baseY, baseY - 1, baseY, baseY - 1, baseY],
       x: [baseX, baseX, baseX, baseX, baseX],
       scale: [1, 1.02, 1, 1.02, 1],
       transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isPreRemove) {
     animationProps = {
-      y: [0, 0, 0, 0, 0],
-      opacity: [1, 1, 1, 1, 1],
+      y: [0, -3, 0, -3, 0],
       scale: [1, 1.03, 1, 1.03, 1],
-      transition: { duration: 5, repeat: Infinity, repeatType: "loop" as const },
+      transition: { duration: 2.5, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isRemoved) {
     animationProps = {
-      y: STACK_ITEM_HEIGHT * 1.5,
-      x: STACK_ITEM_HEIGHT *.5,
-      opacity: 0,
-      scale: 1,
-      rotate: 25,
-      transition: { duration: 3, ease: "easeIn" },
+      x: [0, STACK_ITEM_WIDTH * 0.5],   // slide right
+      y: [0, STACK_ITEM_HEIGHT * 1.5],  // then fall down
+      rotate: [0, 25],
+      opacity: [1, 0],
+      scale: [1, 0.8],
+      transition: { duration: 0.8, ease: "easeIn" },
     };
   }
 
@@ -62,8 +60,11 @@ export default function StackItem({ item, index, onRemoved }: StackItemProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        position: "absolute",
+        bottom: index * STACK_ITEM_HEIGHT, // bottom-anchored stacking
+        left: 0,
         boxShadow: isPreInsert ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
-        zIndex: isPreInsert ? 10 : 1,
+        zIndex: index + 1, // top items above
       }}
       animate={animationProps}
       layout

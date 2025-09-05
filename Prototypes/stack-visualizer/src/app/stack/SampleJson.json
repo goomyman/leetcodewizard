@@ -15,19 +15,10 @@
 {
   "controls": [
     {
-      "id": "array1",
-      "type": "array",
-      "batch": {
-        "updates": [
-          { "index": 1, "input": { "value": "X" } }
-        ]
-      }
-    },
-    {
       "id": "stack1",
       "type": "stack",
       "batch": {
-        "inserts": [
+        "deletes": [
           { "index": 1, "input": { "value": "A" } }
         ]
       }
