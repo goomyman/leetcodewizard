@@ -1,96 +1,86 @@
-// BatchProcessor.ts
 import { ControlItem, ControlItemState } from "./ControlTypes";
 
 export interface Batch<T extends ControlItem> {
   inserts?: { input: T; targetIndex: number }[];
   updates?: { input: T; targetIndex: number }[];
-  deletes?: { targetIndex?: number; index?: number }[];
+  deletes?: { targetIndex: number }[];
 }
 
 export class BatchProcessor<T extends ControlItem> {
-  private history: T[][] = [];
+  private snapshots: T[][] = [];
 
-  constructor(initial: T[][]) {
-    this.history = [...initial];
-    console.log("🔵 BatchProcessor initialized with history:", this.history);
+  constructor(initialItems: T[][] = []) {
+    // Start with initial snapshot
+    if (initialItems.length === 0) {
+      this.snapshots.push([]);
+    } else {
+      this.snapshots = initialItems.map(s => [...s]);
+    }
   }
 
-  getHistory(): T[][] {
-    return this.history;
+  private get currentSnapshot(): T[] {
+    return this.snapshots[this.snapshots.length - 1];
   }
 
-  private advancePreStates() {
-    if (this.history.length === 0) return;
-
-    const last = this.history[this.history.length - 1];
-    console.log("⏩ Advancing pre-states from snapshot:", last);
-
-    const advanced = last
-      .map(item => {
-        if (item.state === ControlItemState.PreInsert) {
-          console.log("   ✅ PreInsert → Inserted:", item);
-          return { ...item, state: ControlItemState.Inserted };
-        }
-        if (item.state === ControlItemState.PreUpdate) {
-          console.log("   ✅ PreUpdate → Updated:", item);
-          return { ...item, state: ControlItemState.Updated };
-        }
-        if (item.state === ControlItemState.PreRemove) {
-          console.log("   ❌ Removing PreRemove item:", item);
-          return null;
-        }
-        return item;
-      })
-      .filter((x): x is T => x !== null);
-
-    this.history.push(advanced);
-    console.log("✅ Advanced snapshot pushed:", advanced);
+  private cloneCurrent(): T[] {
+    return this.currentSnapshot.map(item => ({ ...item }));
   }
 
+  // Apply a batch (automatically finalizes pre-states first)
   applyBatch(batch: Batch<T>) {
-    // Always resolve pre-states first
-    this.advancePreStates();
+    console.log("📦 Applying batch:", batch);
 
-    const prev = this.history[this.history.length - 1] ?? [];
-    console.log("📦 Applying batch:", batch, "to snapshot:", prev);
+    // Clone current snapshot
+    const snapshot = this.cloneCurrent();
 
-    let next = [...prev];
+    // Advance existing pre-states to final states
+    snapshot.forEach(item => {
+      if (item.state === ControlItemState.PreInsert || item.state === ControlItemState.PreUpdate) {
+        item.state = ControlItemState.Inserted;
+      } else if (item.state === ControlItemState.PreRemove) {
+        item.state = ControlItemState.Removed;
+      }
+    });
 
     // --- Deletes ---
     batch.deletes?.forEach(d => {
-      const idx = d.index ?? d.targetIndex;
-      if (idx !== undefined && idx >= 0 && idx < next.length) {
-        console.log(`   ❌ Marking index ${idx} as PreRemove:`, next[idx]);
-        next[idx] = {
-          ...next[idx],
-          state: ControlItemState.PreRemove,
-        };
-      }
+      const idx = d.targetIndex;
+      if (snapshot[idx]) snapshot[idx].state = ControlItemState.PreRemove;
     });
 
     // --- Updates ---
     batch.updates?.forEach(u => {
-      const idx = u.targetIndex;
-      if (idx !== undefined && idx >= 0 && idx < next.length) {
-        console.log(`   ✏️ Marking index ${idx} as PreUpdate:`, u.input);
-        next[idx] = {
-          ...u.input,
-          state: ControlItemState.PreUpdate,
-        };
-      }
+      const idx = u.targetIndex ?? 0;
+      if (snapshot[idx]) snapshot[idx].state = ControlItemState.PreRemove;
+
+      const newNode: T = {
+        ...u.input,
+        state: ControlItemState.PreUpdate,
+        targetIndex: idx,
+      };
+
+      snapshot.splice(idx, 0, newNode);
     });
 
     // --- Inserts ---
-    batch.inserts?.forEach(ins => {
-      const newItem = {
-        ...ins.input,
+    batch.inserts?.forEach(i => {
+      const idx = i.targetIndex ?? 0;
+      const newNode: T = {
+        ...i.input,
         state: ControlItemState.PreInsert,
+        targetIndex: idx,
       };
-      console.log(`   ➕ Inserting PreInsert at index ${ins.targetIndex}:`, newItem);
-      next.splice(ins.targetIndex, 0, newItem);
+      snapshot.splice(idx, 0, newNode);
     });
 
-    this.history.push(next);
-    console.log("✅ Snapshot after batch applied:", next);
+    // Push new snapshot
+    this.snapshots.push(snapshot);
+
+    console.log("✅ Snapshot after batch applied:", snapshot);
+  }
+
+  // Get the history
+  getHistory(): T[][] {
+    return this.snapshots;
   }
 }
