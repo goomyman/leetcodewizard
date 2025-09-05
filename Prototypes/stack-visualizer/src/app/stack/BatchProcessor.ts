@@ -32,8 +32,9 @@ export class BatchProcessor<T extends ControlItem> {
 
     // Clone current snapshot
     const snapshot = this.cloneCurrent();
+    console.log("📦 Snapshot before applying:", JSON.stringify(snapshot, null, 2));
 
-    // Advance existing pre-states to final states
+    // Advance pre-states to final states
     snapshot.forEach(item => {
       if (item.state === ControlItemState.PreInsert || item.state === ControlItemState.PreUpdate) {
         item.state = ControlItemState.Inserted;
@@ -42,42 +43,49 @@ export class BatchProcessor<T extends ControlItem> {
       }
     });
 
-    // --- Deletes ---
+    // --- Deletes by targetIndex mapping to actual node ---
     batch.deletes?.forEach(d => {
-      const idx = d.targetIndex;
-      if (snapshot[idx]) snapshot[idx].state = ControlItemState.PreRemove;
+      const node = snapshot.find(item => item.targetIndex === d.targetIndex && item.state !== ControlItemState.PreUpdate && item.state !== ControlItemState.PreRemove);
+      if (node) node.state = ControlItemState.PreRemove;
     });
 
     // --- Updates ---
     batch.updates?.forEach(u => {
-      const idx = u.targetIndex ?? 0;
-      if (snapshot[idx]) snapshot[idx].state = ControlItemState.PreRemove;
+      // Mark original node for removal by targetIndex
+      const nodeToRemove = snapshot.find(item => item.targetIndex === u.targetIndex && item.state !== ControlItemState.PreUpdate && item.state !== ControlItemState.PreRemove);
+      if (nodeToRemove) nodeToRemove.state = ControlItemState.PreRemove;
 
+      // Insert new PreUpdate node
       const newNode: T = {
         ...u.input,
         state: ControlItemState.PreUpdate,
-        targetIndex: idx,
+        targetIndex: u.targetIndex,
       };
 
-      snapshot.splice(idx, 0, newNode);
+      // Find insert position based on targetIndex
+      const insertPos = snapshot.findIndex(item => item.targetIndex >= u.targetIndex);
+      if (insertPos >= 0) snapshot.splice(insertPos, 0, newNode);
+      else snapshot.push(newNode);
     });
 
     // --- Inserts ---
     batch.inserts?.forEach(i => {
-      const idx = i.targetIndex ?? 0;
       const newNode: T = {
         ...i.input,
         state: ControlItemState.PreInsert,
-        targetIndex: idx,
+        targetIndex: i.targetIndex,
       };
-      snapshot.splice(idx, 0, newNode);
+
+      const insertPos = snapshot.findIndex(item => item.targetIndex >= i.targetIndex);
+      if (insertPos >= 0) snapshot.splice(insertPos, 0, newNode);
+      else snapshot.push(newNode);
     });
 
     // Push new snapshot
     this.snapshots.push(snapshot);
-
-    console.log("✅ Snapshot after batch applied:", snapshot);
+    console.log("✅ Snapshot after batch applied:", JSON.stringify(snapshot, null, 2));
   }
+
 
   // Get the history
   getHistory(): T[][] {

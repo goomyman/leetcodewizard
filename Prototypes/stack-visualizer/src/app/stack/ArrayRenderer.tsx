@@ -14,7 +14,7 @@ export default function ArrayRenderer({ control, onRemoved }: ArrayRendererProps
   // Compute container width based on the maximum target index of all items
   const maxTargetIndex =
     control.items.length > 0
-      ? Math.max(...control.items.map((item) => item.targetIndex ?? 0))
+      ? Math.max(...control.items.map((item) => item.targetIndex))
       : 0;
 
   const containerWidth = (maxTargetIndex + 1) * ARRAY_ITEM_SIZE;

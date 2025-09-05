@@ -50,7 +50,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
             color: i.input.color ?? getRandomColor(),
             level: i.input.level ?? null,
           } as ControlItem,
-          targetIndex: i.index ?? 0,
+          targetIndex: i.index,
         })),
         updates: rawBatch.updates?.map((u: any) => ({
           input: {

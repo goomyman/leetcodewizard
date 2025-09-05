@@ -5,6 +5,20 @@
       "type": "array",
       "batch": {
         "updates": [
+          { "index": 0, "input": { "value": "X" } }
+        ]
+      }
+    }
+  ]
+}
+
+{
+  "controls": [
+    {
+      "id": "array1",
+      "type": "array",
+      "batch": {
+        "updates": [
           { "index": 1, "input": { "value": "X" } }
         ]
       }

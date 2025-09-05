@@ -16,12 +16,12 @@ export enum ControlType {
 }
 
 export interface ControlItem {
-  id: number | string;
+  id: string;
   value?: any;
   level?: number | null;
   color?: string;
   state: ControlItemState;
-  targetIndex?: number;
+  targetIndex: number;
 }
 
 export interface Batch<T> {

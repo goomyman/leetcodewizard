@@ -40,11 +40,11 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
     };
   } else if (isRemoved) {
     animationProps = {
-      y: ARRAY_ITEM_SIZE * 1.5,
+      y: ARRAY_ITEM_SIZE * 1.75,
       opacity: 0,
-      scale: 0.8,
-      rotate: 25,
-      transition: { duration: .8, ease: "easeIn" },
+      scale: 1,
+      rotate: [1,1,1,2,3,5,8,13,21,34],
+      transition: { duration: .6, ease: "easeIn" },
     };
   } else {
     // Inserted or default
@@ -53,7 +53,7 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
       scale: 1,
       rotate: 0,
       opacity: 1,
-      transition: { duration: .6, ease: "easeOut" },
+      transition: { duration: .8, ease: "easeOut" },
     };
   }
 
