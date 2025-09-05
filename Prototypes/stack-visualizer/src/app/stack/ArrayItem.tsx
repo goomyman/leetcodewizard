@@ -6,7 +6,7 @@ import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayItemProps {
   item: ControlItem;
-  index: number;
+  index: number; // target horizontal slot
   onRemoved?: (id: string) => void;
 }
 
@@ -18,22 +18,33 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
 
   const floating = isPreInsert || isPreUpdate || isPreRemove || isRemoved;
 
-  const baseY = isPreInsert || isPreUpdate ? -ARRAY_ITEM_SIZE - 6 : 0;
+  // base Y offset for floating items
+  let baseY = 0;
+  if (isPreInsert) baseY = -ARRAY_ITEM_SIZE - 6;
+  if (isPreUpdate) baseY = -ARRAY_ITEM_SIZE - 6;
+  if (isPreRemove) baseY = 0;
+  if (isRemoved) baseY = 0;
 
   let animationProps: any = { y: 0, scale: 1, rotate: 0, opacity: 1 };
 
-  if (isPreInsert || isPreUpdate) {
+  if (isPreInsert) {
     animationProps = {
       y: [baseY, baseY - 5, baseY, baseY - 5, baseY],
       scale: [1, 1, 1, 1, 1],
-      transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
+      transition: { duration: 2, repeat: Infinity, repeatType: "loop" as const },
+    };
+  } else if (isPreUpdate) {
+    animationProps = {
+      y: [baseY, baseY - 5, baseY, baseY - 5, baseY],
+      scale: [1, 1, 1, 1, 1],
+      transition: { duration: 2, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isPreRemove) {
     animationProps = {
-      y: [0, 0, 0],
-      scale: [1, 1, 1],
-      rotate: [0, 0, 0],
-      transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
+      y: [0, -5, 0, 5, 0],
+      rotate: [0, -5, 0, 5, 0],
+      scale: [1, 1, 1, 1, 1],
+      transition: { duration: 2, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isRemoved) {
     animationProps = {
@@ -42,6 +53,15 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
       scale: 0.8,
       rotate: 10,
       transition: { duration: 0.5, ease: "easeIn" },
+    };
+  } else {
+    // Inserted or default
+    animationProps = {
+      y: 0,
+      scale: 1,
+      rotate: 0,
+      opacity: 1,
+      transition: { duration: 0.3, ease: "easeOut" },
     };
   }
 
@@ -55,8 +75,6 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
     ? "red"
     : item.color;
 
-  const GAP = 8;
-
   return (
     <motion.div
       style={{
@@ -69,12 +87,12 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
         justifyContent: "center",
         fontWeight: "bold",
         zIndex: floating ? 10 : 1,
-        position: "absolute",
-        left: index * (ARRAY_ITEM_SIZE + GAP),
+        position: "absolute", // everything absolute
+        left: index * ARRAY_ITEM_SIZE,
         top: 0,
       }}
       animate={animationProps}
-      layout={!floating}
+      layout={false}
       onAnimationComplete={() => {
         if (isRemoved && onRemoved) onRemoved(String(item.id));
       }}

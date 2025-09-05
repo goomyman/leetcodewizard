@@ -3,75 +3,64 @@
 import React, { useState, useRef } from "react";
 import StackRenderer from "./StackRenderer";
 import ArrayRenderer from "./ArrayRenderer";
-import { Control, ControlItem, ControlType } from "./ControlTypes";
-import { BatchProcessor } from "./BatchProcessor";
-import { getRandomColor } from "./ControlTypes";
+import { Control, ControlItem, ControlType, ControlItemState, getRandomColor } from "./ControlTypes";
+import { BatchProcessor, Batch } from "./BatchProcessor";
 
 interface ControlManagerProps {
   initialData?: { controls: Control<ControlItem>[] };
 }
 
 export default function ControlManager({ initialData }: ControlManagerProps) {
-  const [controls, setControls] = useState<Control<ControlItem>[]>(
-    initialData?.controls || []
-  );
+  const [controls, setControls] = useState<Control<ControlItem>[]>(initialData?.controls || []);
   const [sliderValue, setSliderValue] = useState(0);
   const [jsonInput, setJsonInput] = useState("");
 
-  // Batch processors per control
   const batchProcessors = useRef<BatchProcessor<ControlItem>[]>(
-    (initialData?.controls || []).map(
-      (c) => new BatchProcessor<ControlItem>([c.items || []])
-    )
+    (initialData?.controls || []).map(c => new BatchProcessor<ControlItem>([c.items || []]))
   );
 
-  // Max steps for slider
-  const maxSteps = Math.max(
-    ...batchProcessors.current.map((bp) => bp.getHistory().length),
-    1
-  );
+  const getMaxSteps = () => Math.max(...batchProcessors.current.map(bp => bp.getHistory().length), 1);
 
   const handleUpload = (data: { controls: Control<ControlItem>[] }) => {
     setControls(data.controls);
 
-    // Apply batches to each control
-  data.controls.forEach((control, idx) => {
-    const batch = control.batch ?? {};
+    // Ensure batchProcessors exist for all controls
+    batchProcessors.current = data.controls.map((control, idx) => {
+      return batchProcessors.current[idx] || new BatchProcessor<ControlItem>([control.items || []]);
+    });
 
-    // Ensure every insert/update in the batch has proper defaults
-    if (batch.inserts) {
-      batch.inserts = batch.inserts.map(insert => ({
-        ...insert,
-        input: {
-          ...insert.input,
-          color: insert.input.color ?? getRandomColor(),
-          level: insert.input.level ?? null,
-        },
-      }));
-    }
+    // Apply batch for each control in one snapshot
+    data.controls.forEach((control, idx) => {
+      const rawBatch: any = control.batch ?? {};
 
-    if (batch.updates) {
-      batch.updates = batch.updates.map(update => ({
-        ...update,
-        input: {
-          ...update.input,
-          color: update.input.color ?? getRandomColor(),
-          level: update.input.level ?? null,
-        },
-      }));
-    }
+      const batch: Batch<ControlItem> = {
+        inserts: rawBatch.inserts?.map((i: any) => ({
+          input: {
+            id: i.input.id ?? `temp-${Math.random()}`,
+            value: i.input.value ?? 0,
+            color: i.input.color ?? getRandomColor(),
+            level: i.input.level ?? null,
+            state: ControlItemState.PreInsert,
+          } as ControlItem,
+          targetIndex: i.index,
+        })),
+        updates: rawBatch.updates?.map((u: any) => ({
+          input: {
+            id: u.input.id ?? `temp-${Math.random()}`,
+            value: u.input.value ?? 0,
+            color: u.input.color ?? getRandomColor(),
+            level: u.input.level ?? null,
+            state: ControlItemState.PreUpdate,
+          } as ControlItem,
+          targetIndex: u.targetIndex,
+        })),
+        deletes: rawBatch.deletes?.map((d: any) => ({ targetIndex: d.index })),
+      };
 
-    batchProcessors.current[idx].applyBatch(batch);
-  });
+      batchProcessors.current[idx].applyBatch(batch);
+    });
 
-    // After updating batch processors, get the new max step
-    const newMaxSteps = Math.max(
-      ...batchProcessors.current.map(bp => bp.getHistory().length),
-      1
-    );
-
-    // Move slider to latest step
-    setSliderValue(newMaxSteps - 1);
+    setSliderValue(getMaxSteps() - 1);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -84,8 +73,8 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
     }
   };
 
-  const goBack = () => setSliderValue((v) => Math.max(0, v - 1));
-  const goForward = () => setSliderValue((v) => Math.min(maxSteps - 1, v + 1));
+  const goBack = () => setSliderValue(v => Math.max(0, v - 1));
+  const goForward = () => setSliderValue(v => Math.min(getMaxSteps() - 1, v + 1));
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
@@ -118,9 +107,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
         <input
           type="file"
           accept="application/json"
-          onChange={(e) =>
-            e.target.files && handleFileUpload(e.target.files[0])
-          }
+          onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])}
           className="px-3 py-1 bg-gray-300 rounded cursor-pointer"
         />
       </div>
@@ -136,7 +123,7 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
         <input
           type="range"
           min={0}
-          max={maxSteps - 1}
+          max={getMaxSteps() - 1}
           value={sliderValue}
           onChange={(e) => setSliderValue(Number(e.target.value))}
           className="w-96"
@@ -153,27 +140,15 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
       {/* Render controls */}
       <div className="flex flex-col gap-6 w-full items-center">
         {controls.map((control, idx) => {
-          const currentItems =
-            batchProcessors.current[idx]?.getHistory()[sliderValue] || [];
-
+          const currentItems = batchProcessors.current[idx]?.getHistory()[sliderValue] || [];
           const controlWithCurrentItems = { ...control, items: currentItems };
 
           if (control.type === ControlType.Stack) {
-            return (
-              <StackRenderer
-                key={control.id}
-                control={controlWithCurrentItems}
-              />
-            );
+            return <StackRenderer key={control.id} control={controlWithCurrentItems} />;
           }
 
           if (control.type === ControlType.Array) {
-            return (
-              <ArrayRenderer
-                key={control.id}
-                control={controlWithCurrentItems}
-              />
-            );
+            return <ArrayRenderer key={control.id} control={controlWithCurrentItems} />;
           }
 
           return null;
