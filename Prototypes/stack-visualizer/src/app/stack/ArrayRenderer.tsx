@@ -2,7 +2,7 @@
 
 import React from "react";
 import ArrayItem from "./ArrayItem";
-import { Control, ControlItem } from "./ControlTypes";
+import { Control, ControlItem, ControlItemState } from "./ControlTypes";
 import { ARRAY_ITEM_SIZE } from "./ArrayItemConstants";
 
 interface ArrayRendererProps {
@@ -11,14 +11,26 @@ interface ArrayRendererProps {
 }
 
 export default function ArrayRenderer({ control, onRemoved }: ArrayRendererProps) {
-  const containerWidth = Math.max(control.items.length, 5) * ARRAY_ITEM_SIZE; // min 5 slots
+  // Compute container width based on the maximum target index of all items
+  const maxTargetIndex =
+    control.items.length > 0
+      ? Math.max(...control.items.map((item) => item.targetIndex ?? 0))
+      : 0;
+
+  const containerWidth = (maxTargetIndex + 1) * ARRAY_ITEM_SIZE;
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-start"> {/* left-align */}
       <h3 className="text-white font-semibold">{control.id}</h3>
-      <div className="relative" style={{ height: ARRAY_ITEM_SIZE, width: containerWidth }}>
+      <div
+        className="relative"
+        style={{
+          width: containerWidth,
+          height: ARRAY_ITEM_SIZE,
+        }}
+      >
         {control.items.map((item, idx) => {
-          // Always use targetIndex if present
+          // Use targetIndex for floating items
           const slotIndex = item.targetIndex ?? idx;
 
           return (
