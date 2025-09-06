@@ -6,64 +6,47 @@ import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface ArrayItemProps {
   item: ControlItem;
-  index: number; // target horizontal slot
+  leftIndex: number;
+  topOffset?: number;
   onRemoved?: (id: string) => void;
 }
 
-export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
+export default function ArrayItem({ item, leftIndex, topOffset = 0, onRemoved }: ArrayItemProps) {
   const isPreUpdate = item.state === ControlItemState.PreUpdate;
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isRemoved = item.state === ControlItemState.Removed;
 
   const floating = isPreUpdate || isPreRemove || isRemoved;
 
-  // base Y offset for floating items
-  let baseY = 0;
-  if (isPreUpdate) baseY = -ARRAY_ITEM_SIZE - 6;
-  if (isPreRemove) baseY = 0;
-  if (isRemoved) baseY = 0;
-
-  let animationProps: any = { y: 0, scale: 1, rotate: 0, opacity: 1 };
+  let animationProps: any = { y: 0, opacity: 1, scale: 1 };
 
   if (isPreUpdate) {
     animationProps = {
-      y: [baseY, baseY + 5, baseY, baseY, baseY],
-      scale: [1, 1, 1, 1, 1],
-      transition: { duration: 2, repeat: Infinity, repeatType: "loop" as const },
+      y: [-ARRAY_ITEM_SIZE - 4, -ARRAY_ITEM_SIZE - 2, -ARRAY_ITEM_SIZE - 4],
+      scale: [1, 1.02, 1],
+      transition: { duration: 1.5, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isPreRemove) {
     animationProps = {
-      y: [0, 5, 0, 0, 0],
-      rotate: [0, 0, 0, 0, 0],
-      scale: [1, 1, 1, 1, 1],
-      transition: { duration: 2, repeat: Infinity, repeatType: "loop" as const },
+      y: [0, 4, 0, 4, 0],
+      transition: { duration: 1.5, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isRemoved) {
     animationProps = {
-      y: ARRAY_ITEM_SIZE * 1.75,
+      y: ARRAY_ITEM_SIZE * 1.5,
       opacity: 0,
-      scale: 1,
-      rotate: [1,1,1,2,3,5,8,13,21,34],
-      transition: { duration: .6, ease: "easeIn" },
+      transition: { duration: 0.6, ease: "easeIn" },
     };
   } else {
-    // Inserted or default
     animationProps = {
       y: 0,
-      scale: 1,
-      rotate: 0,
       opacity: 1,
-      transition: { duration: .8, ease: "easeOut" },
+      scale: 1,
+      transition: { duration: 0.8, ease: "easeOut" },
     };
   }
 
-  const displayColor =  isPreUpdate
-    ? "green"
-    : isPreRemove
-    ? "red"
-    : isRemoved
-    ? "red"
-    : item.color;
+  const displayColor = isPreUpdate ? "green" : isPreRemove || isRemoved ? "red" : item.color;
 
   return (
     <motion.div
@@ -76,10 +59,10 @@ export default function ArrayItem({ item, index, onRemoved }: ArrayItemProps) {
         alignItems: "center",
         justifyContent: "center",
         fontWeight: "bold",
+        position: "absolute",
+        left: leftIndex * ARRAY_ITEM_SIZE,
+        top: topOffset,
         zIndex: floating ? 10 : 1,
-        position: "absolute", // everything absolute
-        left: index * ARRAY_ITEM_SIZE,
-        top: 0,
       }}
       animate={animationProps}
       layout={false}

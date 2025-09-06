@@ -22,6 +22,7 @@ export interface ControlItem {
   color?: string;
   state: ControlItemState;
   _isRemoved?: boolean;
+  updateTargetId ?: string; // for update animation
 }
 
 export interface Batch<T> {
