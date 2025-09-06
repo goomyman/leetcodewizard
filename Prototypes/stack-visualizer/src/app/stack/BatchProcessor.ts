@@ -29,51 +29,45 @@ export class BatchProcessor<T extends ControlItem> {
   applyBatch(batch: Batch<T>) {
     const snapshot = this.cloneCurrent();
 
-    // Advance PreInsert / PreUpdate → Inserted
+    // --- Advance all pre-states from previous batch ---
     snapshot.forEach(item => {
       if (item.state === ControlItemState.PreInsert || item.state === ControlItemState.PreUpdate) {
         item.state = ControlItemState.Inserted;
+      } else if (item.state === ControlItemState.PreRemove) {
+        item.state = ControlItemState.Removed;
       }
     });
 
     const visibleItems = snapshot.filter(item => item.state !== ControlItemState.Removed);
 
-    // Deletes by visual index
+    // --- Deletes by visual index ---
     batch.deletes?.forEach(idx => {
       const itemToDelete = visibleItems[idx];
       if (itemToDelete) {
         const node = snapshot.find(item => item.id === itemToDelete.id);
-        if (node && node.state !== ControlItemState.PreRemove) {
+        if (node && node.state !== ControlItemState.PreRemove && node.state !== ControlItemState.Removed) {
           node.state = ControlItemState.PreRemove;
         }
       }
     });
 
-    // Updates
+    // --- Updates ---
     batch.updates?.forEach(u => {
-      const nodeToRemove = snapshot.find(item => item.id === u.id && item.state !== ControlItemState.PreRemove);
+      const nodeToRemove = snapshot.find(
+        item => item.id === u.id && item.state !== ControlItemState.PreRemove && item.state !== ControlItemState.Removed
+      );
       if (nodeToRemove) nodeToRemove.state = ControlItemState.PreRemove;
 
       const insertPos = u.index <= visibleItems.length ? u.index : snapshot.length;
       snapshot.splice(insertPos, 0, { ...u.input, state: ControlItemState.PreUpdate });
     });
 
-    // Inserts
+    // --- Inserts ---
     batch.inserts?.forEach(i => {
       const insertPos = i.index <= visibleItems.length ? i.index : snapshot.length;
       snapshot.splice(insertPos, 0, { ...i.input, state: ControlItemState.PreInsert });
     });
 
-    this.snapshots.push(snapshot);
-  }
-
-  advanceRemovals() {
-    const snapshot = this.cloneCurrent();
-    snapshot.forEach(item => {
-      if (item.state === ControlItemState.PreRemove) {
-        item.state = ControlItemState.Removed;
-      }
-    });
     this.snapshots.push(snapshot);
   }
 
