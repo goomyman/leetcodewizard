@@ -72,5 +72,4 @@ export default function ArrayItem({ item, leftIndex, topOffset = 0, onRemoved }:
     >
       {item.value}
     </motion.div>
-  );
-}
+  )

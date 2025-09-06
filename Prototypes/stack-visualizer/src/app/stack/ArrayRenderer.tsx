@@ -14,9 +14,12 @@ export default function ArrayRenderer({ control, onRemoved }: ArrayRendererProps
   const [forceUpdate, setForceUpdate] = useState(0);
   const allItems = control.items;
 
-  // Only items that occupy a slot (ignore PreUpdate)
+  // Only items that occupy a slot (ignore PreUpdate and Removed)
   const layoutItems = allItems.filter(
-    item => !item._isRemoved && item.state !== ControlItemState.PreUpdate
+    item =>
+      !item._isRemoved &&
+      item.state !== ControlItemState.PreUpdate &&
+      item.state !== ControlItemState.Removed
   );
 
   return (
@@ -30,7 +33,7 @@ export default function ArrayRenderer({ control, onRemoved }: ArrayRendererProps
         }}
       >
         {allItems.map((item) => {
-          // Default layout index for items that occupy a slot
+          // Determine the layout index for items that occupy a slot
           let layoutIndex = layoutItems.findIndex(i => i.id === item.id);
           if (layoutIndex < 0) layoutIndex = 0;
 
@@ -41,10 +44,10 @@ export default function ArrayRenderer({ control, onRemoved }: ArrayRendererProps
           if (item.state === ControlItemState.PreUpdate && item.updateTargetId) {
             const targetIndex = layoutItems.findIndex(i => i.id === item.updateTargetId);
             left = targetIndex >= 0 ? targetIndex : 0;
-            top = -ARRAY_ITEM_SIZE - 4; // float above target
+            top = -ARRAY_ITEM_SIZE - 4;
           }
 
-          // PreRemove / Removed remain in place
+          // PreRemove / Removed: stay in place
           else if (item.state === ControlItemState.PreRemove || item.state === ControlItemState.Removed) {
             top = 0;
           }
