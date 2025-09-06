@@ -21,7 +21,6 @@ export interface ControlItem {
   level?: number | null;
   color?: string;
   state: ControlItemState;
-  targetIndex: number;
 }
 
 export interface Batch<T> {
