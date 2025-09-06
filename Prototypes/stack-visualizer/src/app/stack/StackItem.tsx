@@ -15,32 +15,28 @@ export default function StackItem({ item, index, onRemoved }: StackItemProps) {
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isRemoved = item.state === ControlItemState.Removed;
 
-  const baseY = isPreInsert ? -STACK_ITEM_HEIGHT * 0 : 0;
-  const baseX = isPreInsert ? -STACK_ITEM_WIDTH * 0.6 : 0;
-
-  let animationProps: any = { x: 0, y: 0, scale: 1 };
+  let animationProps: any = { y: 0, x: 0, scale: 1 };
 
   if (isPreInsert) {
     animationProps = {
-      y: [baseY, baseY - 1, baseY, baseY - 1, baseY],
-      x: [baseX, baseX, baseX, baseX, baseX],
+      y: [0, -3, 0, -3, 0],
       scale: [1, 1.02, 1, 1.02, 1],
-      transition: { duration: 3, repeat: Infinity, repeatType: "loop" as const },
+      transition: { duration: 2.5, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isPreRemove) {
     animationProps = {
-      y: [0, -3, 0, -3, 0],
+      y: [0, -4, 0, -4, 0],
       scale: [1, 1.03, 1, 1.03, 1],
       transition: { duration: 2.5, repeat: Infinity, repeatType: "loop" as const },
     };
   } else if (isRemoved) {
     animationProps = {
-      x: [0, STACK_ITEM_WIDTH * 1.2],   // slide right
-      y: [0, 0, 0, 0, 0, 0, 1, 5, 10, STACK_ITEM_WIDTH * .6, STACK_ITEM_WIDTH * .7],  // then fall down
-      rotate: [0, 0, 0, 0, 0, 0, 0, 1, 2, 5, 30, 70, 90],
+      x: [0, STACK_ITEM_WIDTH * 1.2],
+      y: [0, 5, 10, 20],
+      rotate: [0, 15, 30, 60],
       opacity: [1, 0],
       scale: [1, 0.8],
-      transition: { duration: 1.75, ease: "easeIn" },
+      transition: { duration: 1.5, ease: [0.4, 0, 0.2, 1] },
     };
   }
 
@@ -48,10 +44,11 @@ export default function StackItem({ item, index, onRemoved }: StackItemProps) {
     ? "green"
     : isPreRemove || isRemoved
     ? "red"
-    : item.color;
+    : item.color ?? "gray";
 
   return (
     <motion.div
+      key={`${item.id}-${item.state}-${index}`}
       style={{
         width: STACK_ITEM_WIDTH,
         height: STACK_ITEM_HEIGHT,
@@ -61,17 +58,15 @@ export default function StackItem({ item, index, onRemoved }: StackItemProps) {
         alignItems: "center",
         justifyContent: "center",
         position: "absolute",
-        bottom: index * STACK_ITEM_HEIGHT, // bottom-anchored stacking
+        bottom: index * STACK_ITEM_HEIGHT,
         left: 0,
-        boxShadow: isPreInsert ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
-        zIndex: index + 1, // top items above
+        zIndex: index + 1,
       }}
+      layout={false} // prevent layout interpolation
       animate={animationProps}
-      layout
       onAnimationComplete={() => {
         if (isRemoved && onRemoved) onRemoved(String(item.id));
       }}
-      className="text-sm font-bold text-black"
     >
       <div className="w-full text-left font-bold text-lg pl-3 flex-1">
         {item.level}
