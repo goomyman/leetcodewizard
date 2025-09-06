@@ -6,11 +6,12 @@ import { ControlItem, ControlItemState } from "./ControlTypes";
 
 interface StackItemProps {
   item: ControlItem;
-  visibleIndex: number; // bottom = 0
+  visibleIndex: number;   // original position for animation
+  layoutIndex?: number;   // stack layout position for collapse
   onRemoved?: (id: string) => void;
 }
 
-export default function StackItem({ item, visibleIndex, onRemoved }: StackItemProps) {
+export default function StackItem({ item, visibleIndex, layoutIndex, onRemoved }: StackItemProps) {
   const isPreInsert = item.state === ControlItemState.PreInsert;
   const isPreRemove = item.state === ControlItemState.PreRemove;
   const isRemoved = item.state === ControlItemState.Removed;
@@ -18,7 +19,6 @@ export default function StackItem({ item, visibleIndex, onRemoved }: StackItemPr
   let animationProps: any = { x: 0, y: 0, scale: 1 };
 
   if (isPreInsert) {
-    // PreInsert: float off to side (doesn't animate into stack yet)
     animationProps = {
       x: [-STACK_ITEM_WIDTH * 0.6, -STACK_ITEM_WIDTH * 0.65, -STACK_ITEM_WIDTH * 0.6],
       y: [0, -2, 0],
@@ -42,7 +42,6 @@ export default function StackItem({ item, visibleIndex, onRemoved }: StackItemPr
     };
   }
 
-  // Once PreInsert becomes Inserted, layout will animate into place
   return (
     <motion.div
       style={{
@@ -55,20 +54,18 @@ export default function StackItem({ item, visibleIndex, onRemoved }: StackItemPr
         alignItems: "center",
         justifyContent: "center",
         position: "absolute",
-        bottom: visibleIndex * STACK_ITEM_HEIGHT,
+        bottom: (layoutIndex ?? visibleIndex) * STACK_ITEM_HEIGHT,
         left: 0,
         boxShadow: isPreInsert ? "0px 8px 15px rgba(0,0,0,0.2)" : "none",
-        zIndex: visibleIndex + 1,
+        zIndex: (layoutIndex ?? visibleIndex) + 1,
       }}
       animate={animationProps}
-      layout // slide into place when visibleIndex changes
+      layout
       onAnimationComplete={() => {
         if (isRemoved && onRemoved) onRemoved(String(item.id));
       }}
     >
-      <div className="w-full text-left font-bold text-lg pl-3 flex-1">
-        {item.level}
-      </div>
+      <div className="w-full text-left font-bold text-lg pl-3 flex-1">{item.level}</div>
       <div className="w-full text-center">{item.value}</div>
     </motion.div>
   );

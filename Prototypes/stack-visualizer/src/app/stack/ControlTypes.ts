@@ -21,6 +21,7 @@ export interface ControlItem {
   level?: number | null;
   color?: string;
   state: ControlItemState;
+  _isRemoved?: boolean;
 }
 
 export interface Batch<T> {

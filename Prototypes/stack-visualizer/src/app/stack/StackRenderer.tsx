@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { Control, ControlItem, ControlItemState } from "./ControlTypes";
+import React, { useState } from "react";
 import StackItem from "./StackItem";
+import { Control, ControlItem, ControlItemState } from "./ControlTypes";
 import { STACK_ITEM_HEIGHT, STACK_ITEM_WIDTH } from "./StackItemConstants";
 
 interface StackRendererProps {
@@ -11,33 +11,44 @@ interface StackRendererProps {
 }
 
 export default function StackRenderer({ control, onRemoved }: StackRendererProps) {
-  // Filter out fully removed items for calculating visible positions
-  const itemsForLayout = control.items.filter(
-    item => item.state !== ControlItemState.Removed
-  );
+  const [forceUpdate, setForceUpdate] = useState(0); // trigger rerender after animation
+  const allItems = control.items;
+
+  // Items that define the stack layout (exclude fully removed items)
+  const layoutItems = allItems.filter(item => !item._isRemoved);
 
   return (
     <div
       className="relative flex flex-col border p-2 bg-gray-800 rounded"
       style={{
         width: STACK_ITEM_WIDTH + 20,
-        height: Math.max(20, itemsForLayout.length) * STACK_ITEM_HEIGHT, // min height 20
+        height: Math.max(20, layoutItems.length) * STACK_ITEM_HEIGHT,
       }}
     >
       <h3 className="text-white font-semibold">{control.id}</h3>
 
-      {control.items.map((item) => {
-        // Compute visible index for layout after removing removed items
-        const visibleIndex = itemsForLayout.findIndex(i => i.id === item.id);
-        // If item is fully removed, assign -1 so it stays hidden in the stack
-        const safeVisibleIndex = visibleIndex >= 0 ? visibleIndex : -1;
+      {allItems.map(item => {
+        // Index for animation (where removed item animates from)
+        const visibleIndex = allItems.findIndex(i => i.id === item.id);
+
+        // Index for layout (stack collapse)
+        const layoutIndex =
+          item.state === ControlItemState.Removed
+            ? visibleIndex
+            : layoutItems.findIndex(i => i.id === item.id);
 
         return (
           <StackItem
-            key={`${item.id}-${item.state}`} // ensures Framer Motion re-renders on state change
+            key={`${item.id}-${item.state}`}
             item={item}
-            visibleIndex={safeVisibleIndex}
-            onRemoved={onRemoved}
+            visibleIndex={visibleIndex}
+            layoutIndex={layoutIndex}
+            onRemoved={(id) => {
+              // Mark item fully removed after animation
+              item._isRemoved = true;
+              setForceUpdate(v => v + 1); // trigger StackRenderer rerender
+              onRemoved?.(id);
+            }}
           />
         );
       })}
