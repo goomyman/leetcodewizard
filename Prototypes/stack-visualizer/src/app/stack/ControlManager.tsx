@@ -24,9 +24,14 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
   const [jsonInput, setJsonInput] = useState("");
 
   const batchProcessors = useRef<BatchProcessor<ControlItem>[]>(
-    (initialData?.controls || []).map(
-      c => new BatchProcessor<ControlItem>([c.items || []])
-    )
+    (initialData?.controls || []).map(c => {
+      const itemsWithId = (c.items || []).map((item, idx) => ({
+        ...item,
+        id: item.id ?? `${c.id}-item-${idx}`
+      }));
+
+      return new BatchProcessor<ControlItem>([itemsWithId]);
+    })
   );
 
   const getMaxSteps = () =>
@@ -48,7 +53,6 @@ export default function ControlManager({ initialData }: ControlManagerProps) {
     const batch: Batch<ControlItem> = {
       inserts: batchSpec.inserts?.map(i => ({
         input: {
-          id: i.input.id ?? `temp-${Math.random()}`,
           value: i.input.value ?? 0,
           color: i.input.color ?? getRandomColor(),
           level: i.input.level ?? null,

@@ -20,3 +20,18 @@
     }
   ]
 }
+
+
+{
+  "controls": [
+    {
+      "id": "array1",
+      "type": "array",
+      "batch": {
+        "updates": [
+          { "index": 0, "input": { "value": "X" } }
+        ]
+      }
+    }
+  ]
+}
