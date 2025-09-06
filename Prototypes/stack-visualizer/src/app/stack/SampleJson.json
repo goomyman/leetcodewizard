@@ -8,17 +8,12 @@
           { "index": 0, "input": { "value": "X" } }
         ]
       }
-    }
-  ]
-}
-
-{
-  "controls": [
+    },
     {
       "id": "stack1",
       "type": "stack",
       "batch": {
-        "deletes": [
+        "inserts": [
           { "index": 1, "input": { "value": "A" } }
         ]
       }
